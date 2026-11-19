@@ -314,7 +314,14 @@ type GetLoadResponse struct {
 	// rate_limited is how often Temporal answered the calls of each server to
 	// each namespace with its rate limit since the server started, FPP-139-R20.
 	// A namespace never answered so has no row.
-	RateLimited   []*TemporalRateLimited `protobuf:"bytes,13,rep,name=rate_limited,json=rateLimited,proto3" json:"rate_limited,omitempty"`
+	RateLimited []*TemporalRateLimited `protobuf:"bytes,13,rep,name=rate_limited,json=rateLimited,proto3" json:"rate_limited,omitempty"`
+	// catch_up_held is each reason that holds the catch-up of each server now,
+	// FPP-138-R21: each busy signal, and each value that would start shedding
+	// and stayed over its limit for the hold while: memory in percent of the
+	// memory limit, calls_running in requests running of the kind of request
+	// in pool, and the others in the unit of busy. slows is false. Empty while
+	// nothing holds it. While a namespace catches up, its past runs wait.
+	CatchUpHeld   []*BusySignal `protobuf:"bytes,14,rep,name=catch_up_held,json=catchUpHeld,proto3" json:"catch_up_held,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -436,6 +443,13 @@ func (x *GetLoadResponse) GetRefused() []*RefusedConnections {
 func (x *GetLoadResponse) GetRateLimited() []*TemporalRateLimited {
 	if x != nil {
 		return x.RateLimited
+	}
+	return nil
+}
+
+func (x *GetLoadResponse) GetCatchUpHeld() []*BusySignal {
+	if x != nil {
+		return x.CatchUpHeld
 	}
 	return nil
 }
@@ -588,11 +602,9 @@ type DatabaseLoad struct {
 	// disk_reads_per_second is the blocks read from outside the shared buffers
 	// a second, over the last 5 seconds.
 	DiskReadsPerSecond float64 `protobuf:"fixed64,5,opt,name=disk_reads_per_second,json=diskReadsPerSecond,proto3" json:"disk_reads_per_second,omitempty"`
-	// active_percent is the active queries against FLOWRENSIC_DB_CORES, and
-	// disk_reads_percent the disk reads against FLOWRENSIC_DB_DISK_READS. The
-	// share of the database is the higher of the two.
-	ActivePercent    float64 `protobuf:"fixed64,6,opt,name=active_percent,json=activePercent,proto3" json:"active_percent,omitempty"`
-	DiskReadsPercent float64 `protobuf:"fixed64,7,opt,name=disk_reads_percent,json=diskReadsPercent,proto3" json:"disk_reads_percent,omitempty"`
+	// active_percent is the active queries against FLOWRENSIC_DB_CORES, the
+	// share of the database. The disk reads have no share.
+	ActivePercent float64 `protobuf:"fixed64,6,opt,name=active_percent,json=activePercent,proto3" json:"active_percent,omitempty"`
 	// cores is FLOWRENSIC_DB_CORES of that server.
 	Cores         float64 `protobuf:"fixed64,8,opt,name=cores,proto3" json:"cores,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -671,13 +683,6 @@ func (x *DatabaseLoad) GetActivePercent() float64 {
 	return 0
 }
 
-func (x *DatabaseLoad) GetDiskReadsPercent() float64 {
-	if x != nil {
-		return x.DiskReadsPercent
-	}
-	return 0
-}
-
 func (x *DatabaseLoad) GetCores() float64 {
 	if x != nil {
 		return x.Cores
@@ -705,7 +710,7 @@ const file_flowrensic_v1_load_proto_rawDesc = "" +
 	"\x04pool\x18\x03 \x01(\tR\x04pool\x12\x14\n" +
 	"\x05value\x18\x04 \x01(\x01R\x05value\x12\x14\n" +
 	"\x05limit\x18\x05 \x01(\x01R\x05limit\x12\x14\n" +
-	"\x05slows\x18\x06 \x01(\bR\x05slows\"\xad\x05\n" +
+	"\x05slows\x18\x06 \x01(\bR\x05slows\"\xec\x05\n" +
 	"\x0fGetLoadResponse\x12\x1d\n" +
 	"\apercent\x18\x01 \x01(\x01H\x00R\apercent\x88\x01\x01\x12*\n" +
 	"\x04jobs\x18\x02 \x03(\v2\x16.flowrensic.v1.JobLoadR\x04jobs\x12,\n" +
@@ -720,7 +725,8 @@ const file_flowrensic_v1_load_proto_rawDesc = "" +
 	" \x01(\x01H\x02R\x0fdatabasePercent\x88\x01\x01\x127\n" +
 	"\bdatabase\x18\v \x01(\v2\x1b.flowrensic.v1.DatabaseLoadR\bdatabase\x12;\n" +
 	"\arefused\x18\f \x03(\v2!.flowrensic.v1.RefusedConnectionsR\arefused\x12E\n" +
-	"\frate_limited\x18\r \x03(\v2\".flowrensic.v1.TemporalRateLimitedR\vrateLimitedB\n" +
+	"\frate_limited\x18\r \x03(\v2\".flowrensic.v1.TemporalRateLimitedR\vrateLimited\x12=\n" +
+	"\rcatch_up_held\x18\x0e \x03(\v2\x19.flowrensic.v1.BusySignalR\vcatchUpHeldB\n" +
 	"\n" +
 	"\b_percentB\x13\n" +
 	"\x11_requests_percentB\x13\n" +
@@ -733,17 +739,16 @@ const file_flowrensic_v1_load_proto_rawDesc = "" +
 	"\x12RefusedConnections\x12\x16\n" +
 	"\x06server\x18\x01 \x01(\tR\x06server\x12\x12\n" +
 	"\x04pool\x18\x02 \x01(\tR\x04pool\x12\x14\n" +
-	"\x05count\x18\x03 \x01(\x03R\x05count\"\xc0\x02\n" +
+	"\x05count\x18\x03 \x01(\x03R\x05count\"\xac\x02\n" +
 	"\fDatabaseLoad\x12\x16\n" +
 	"\x06server\x18\x01 \x01(\tR\x06server\x12%\n" +
 	"\x0eactive_queries\x18\x02 \x01(\x05R\ractiveQueries\x120\n" +
 	"\x14lock_waiting_queries\x18\x03 \x01(\x05R\x12lockWaitingQueries\x12!\n" +
 	"\fslow_queries\x18\x04 \x01(\x05R\vslowQueries\x121\n" +
 	"\x15disk_reads_per_second\x18\x05 \x01(\x01R\x12diskReadsPerSecond\x12%\n" +
-	"\x0eactive_percent\x18\x06 \x01(\x01R\ractivePercent\x12,\n" +
-	"\x12disk_reads_percent\x18\a \x01(\x01R\x10diskReadsPercent\x12\x14\n" +
-	"\x05cores\x18\b \x01(\x01R\x05coresB\xb2\x01\n" +
-	"\x11com.flowrensic.v1B\tLoadProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x0eactive_percent\x18\x06 \x01(\x01R\ractivePercent\x12\x14\n" +
+	"\x05cores\x18\b \x01(\x01R\x05coresJ\x04\b\a\x10\bR\x12disk_reads_percentB\xc9\x01\n" +
+	"\x11com.flowrensic.v1B\tLoadProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_load_proto_rawDescOnce sync.Once
@@ -778,11 +783,12 @@ var file_flowrensic_v1_load_proto_depIdxs = []int32{
 	7, // 5: flowrensic.v1.GetLoadResponse.database:type_name -> flowrensic.v1.DatabaseLoad
 	6, // 6: flowrensic.v1.GetLoadResponse.refused:type_name -> flowrensic.v1.RefusedConnections
 	5, // 7: flowrensic.v1.GetLoadResponse.rate_limited:type_name -> flowrensic.v1.TemporalRateLimited
-	8, // [8:8] is the sub-list for method output_type
-	8, // [8:8] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	3, // 8: flowrensic.v1.GetLoadResponse.catch_up_held:type_name -> flowrensic.v1.BusySignal
+	9, // [9:9] is the sub-list for method output_type
+	9, // [9:9] is the sub-list for method input_type
+	9, // [9:9] is the sub-list for extension type_name
+	9, // [9:9] is the sub-list for extension extendee
+	0, // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_flowrensic_v1_load_proto_init() }

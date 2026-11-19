@@ -225,7 +225,11 @@ type GetServerConfigResponse struct {
 	// In standalone mode, whether the blobs are kept in S3 rather than a folder.
 	BlobsInS3 bool `protobuf:"varint,9,opt,name=blobs_in_s3,json=blobsInS3,proto3" json:"blobs_in_s3,omitempty"`
 	// When this server process started.
-	StartedAt     *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,10,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// What the setup may use, worked out from its license key at start.
+	License *License `protobuf:"bytes,11,opt,name=license,proto3" json:"license,omitempty"`
+	// Whether the usage count is sent, and the last count sent, FPP-301-R11.
+	UsageCount    *UsageCount `protobuf:"bytes,12,opt,name=usage_count,json=usageCount,proto3" json:"usage_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -330,6 +334,335 @@ func (x *GetServerConfigResponse) GetStartedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *GetServerConfigResponse) GetLicense() *License {
+	if x != nil {
+		return x.License
+	}
+	return nil
+}
+
+func (x *GetServerConfigResponse) GetUsageCount() *UsageCount {
+	if x != nil {
+		return x.UsageCount
+	}
+	return nil
+}
+
+// The usage count of the setup, FPP-301.
+type UsageCount struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Whether the server sends the count.
+	On bool `protobuf:"varint,1,opt,name=on,proto3" json:"on,omitempty"`
+	// Where the count goes.
+	Url string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
+	// The setting that turns the count off, as it is set.
+	OffSetting string `protobuf:"bytes,3,opt,name=off_setting,json=offSetting,proto3" json:"off_setting,omitempty"`
+	// The last count the server tried to send since it started, unset when none.
+	Last          *UsageCountSent `protobuf:"bytes,4,opt,name=last,proto3" json:"last,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UsageCount) Reset() {
+	*x = UsageCount{}
+	mi := &file_flowrensic_v1_server_config_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UsageCount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UsageCount) ProtoMessage() {}
+
+func (x *UsageCount) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_server_config_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UsageCount.ProtoReflect.Descriptor instead.
+func (*UsageCount) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_server_config_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *UsageCount) GetOn() bool {
+	if x != nil {
+		return x.On
+	}
+	return false
+}
+
+func (x *UsageCount) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+func (x *UsageCount) GetOffSetting() string {
+	if x != nil {
+		return x.OffSetting
+	}
+	return ""
+}
+
+func (x *UsageCount) GetLast() *UsageCountSent {
+	if x != nil {
+		return x.Last
+	}
+	return nil
+}
+
+// One count the server tried to send.
+type UsageCountSent struct {
+	state  protoimpl.MessageState `protogen:"open.v1"`
+	SentAt *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=sent_at,json=sentAt,proto3" json:"sent_at,omitempty"`
+	// The JSON body as sent, with the license key replaced by hidden.
+	Body string `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
+	// The HTTP status of the answer, 0 when no answer came.
+	Status int32 `protobuf:"varint,3,opt,name=status,proto3" json:"status,omitempty"`
+	// The body of the answer, at most 64 KiB.
+	Answer string `protobuf:"bytes,4,opt,name=answer,proto3" json:"answer,omitempty"`
+	// Why no answer came, empty when one came.
+	Error         string `protobuf:"bytes,5,opt,name=error,proto3" json:"error,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UsageCountSent) Reset() {
+	*x = UsageCountSent{}
+	mi := &file_flowrensic_v1_server_config_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UsageCountSent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UsageCountSent) ProtoMessage() {}
+
+func (x *UsageCountSent) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_server_config_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UsageCountSent.ProtoReflect.Descriptor instead.
+func (*UsageCountSent) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_server_config_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *UsageCountSent) GetSentAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.SentAt
+	}
+	return nil
+}
+
+func (x *UsageCountSent) GetBody() string {
+	if x != nil {
+		return x.Body
+	}
+	return ""
+}
+
+func (x *UsageCountSent) GetStatus() int32 {
+	if x != nil {
+		return x.Status
+	}
+	return 0
+}
+
+func (x *UsageCountSent) GetAnswer() string {
+	if x != nil {
+		return x.Answer
+	}
+	return ""
+}
+
+func (x *UsageCountSent) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+// The license of the setup, FPP-300.
+type License struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// none (no key), valid, expired (within the 14 days after expiry) or ended
+	// (14 days or more after expiry).
+	Stage string `protobuf:"bytes,1,opt,name=stage,proto3" json:"stage,omitempty"`
+	// The key's customer, empty with no key.
+	Customer string `protobuf:"bytes,2,opt,name=customer,proto3" json:"customer,omitempty"`
+	// free or paid.
+	Plan           string `protobuf:"bytes,3,opt,name=plan,proto3" json:"plan,omitempty"`
+	MaxEnvsNum     int32  `protobuf:"varint,4,opt,name=max_envs_num,json=maxEnvsNum,proto3" json:"max_envs_num,omitempty"`
+	HistoryDaysNum int32  `protobuf:"varint,5,opt,name=history_days_num,json=historyDaysNum,proto3" json:"history_days_num,omitempty"`
+	Alerts         bool   `protobuf:"varint,6,opt,name=alerts,proto3" json:"alerts,omitempty"`
+	AllRules       bool   `protobuf:"varint,7,opt,name=all_rules,json=allRules,proto3" json:"all_rules,omitempty"`
+	// The key's dates, unset with no key.
+	IssuedAt  *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=issued_at,json=issuedAt,proto3" json:"issued_at,omitempty"`
+	ExpiresAt *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	// How many days are left of the 14 days after expiry, worked out at each
+	// read; 0 when none are counted.
+	DaysLeft int32 `protobuf:"varint,10,opt,name=days_left,json=daysLeft,proto3" json:"days_left,omitempty"`
+	// When those days end, unset when none are counted.
+	Deadline *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=deadline,proto3" json:"deadline,omitempty"`
+	// When the history days of an expired key stop holding, unset unless the
+	// stage is ended.
+	DataKeptUntil *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=data_kept_until,json=dataKeptUntil,proto3" json:"data_kept_until,omitempty"`
+	// The envs past the limit, as named in FLOWRENSIC_KNOWN_ENVS.
+	EnvsLeftOut []string `protobuf:"bytes,13,rep,name=envs_left_out,json=envsLeftOut,proto3" json:"envs_left_out,omitempty"`
+	// Where a user gets a key.
+	KeysPage      string `protobuf:"bytes,14,opt,name=keys_page,json=keysPage,proto3" json:"keys_page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *License) Reset() {
+	*x = License{}
+	mi := &file_flowrensic_v1_server_config_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *License) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*License) ProtoMessage() {}
+
+func (x *License) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_server_config_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use License.ProtoReflect.Descriptor instead.
+func (*License) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_server_config_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *License) GetStage() string {
+	if x != nil {
+		return x.Stage
+	}
+	return ""
+}
+
+func (x *License) GetCustomer() string {
+	if x != nil {
+		return x.Customer
+	}
+	return ""
+}
+
+func (x *License) GetPlan() string {
+	if x != nil {
+		return x.Plan
+	}
+	return ""
+}
+
+func (x *License) GetMaxEnvsNum() int32 {
+	if x != nil {
+		return x.MaxEnvsNum
+	}
+	return 0
+}
+
+func (x *License) GetHistoryDaysNum() int32 {
+	if x != nil {
+		return x.HistoryDaysNum
+	}
+	return 0
+}
+
+func (x *License) GetAlerts() bool {
+	if x != nil {
+		return x.Alerts
+	}
+	return false
+}
+
+func (x *License) GetAllRules() bool {
+	if x != nil {
+		return x.AllRules
+	}
+	return false
+}
+
+func (x *License) GetIssuedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.IssuedAt
+	}
+	return nil
+}
+
+func (x *License) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
+}
+
+func (x *License) GetDaysLeft() int32 {
+	if x != nil {
+		return x.DaysLeft
+	}
+	return 0
+}
+
+func (x *License) GetDeadline() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Deadline
+	}
+	return nil
+}
+
+func (x *License) GetDataKeptUntil() *timestamppb.Timestamp {
+	if x != nil {
+		return x.DataKeptUntil
+	}
+	return nil
+}
+
+func (x *License) GetEnvsLeftOut() []string {
+	if x != nil {
+		return x.EnvsLeftOut
+	}
+	return nil
+}
+
+func (x *License) GetKeysPage() string {
+	if x != nil {
+		return x.KeysPage
+	}
+	return ""
+}
+
 // One folder of data and the setting that names it.
 type DataPath struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -341,7 +674,7 @@ type DataPath struct {
 
 func (x *DataPath) Reset() {
 	*x = DataPath{}
-	mi := &file_flowrensic_v1_server_config_proto_msgTypes[4]
+	mi := &file_flowrensic_v1_server_config_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -353,7 +686,7 @@ func (x *DataPath) String() string {
 func (*DataPath) ProtoMessage() {}
 
 func (x *DataPath) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_server_config_proto_msgTypes[4]
+	mi := &file_flowrensic_v1_server_config_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -366,7 +699,7 @@ func (x *DataPath) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DataPath.ProtoReflect.Descriptor instead.
 func (*DataPath) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_server_config_proto_rawDescGZIP(), []int{4}
+	return file_flowrensic_v1_server_config_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DataPath) GetSetting() string {
@@ -403,7 +736,7 @@ type StoredRule struct {
 
 func (x *StoredRule) Reset() {
 	*x = StoredRule{}
-	mi := &file_flowrensic_v1_server_config_proto_msgTypes[5]
+	mi := &file_flowrensic_v1_server_config_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -415,7 +748,7 @@ func (x *StoredRule) String() string {
 func (*StoredRule) ProtoMessage() {}
 
 func (x *StoredRule) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_server_config_proto_msgTypes[5]
+	mi := &file_flowrensic_v1_server_config_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -428,7 +761,7 @@ func (x *StoredRule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StoredRule.ProtoReflect.Descriptor instead.
 func (*StoredRule) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_server_config_proto_rawDescGZIP(), []int{5}
+	return file_flowrensic_v1_server_config_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *StoredRule) GetRule() string {
@@ -517,7 +850,7 @@ const file_flowrensic_v1_server_config_proto_rawDesc = "" +
 	"\aignored\x18\a \x01(\tR\aignored\"S\n" +
 	"\tConfigEnv\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x122\n" +
-	"\x06fields\x18\x02 \x03(\v2\x1a.flowrensic.v1.ConfigFieldR\x06fields\"\x98\x04\n" +
+	"\x06fields\x18\x02 \x03(\v2\x1a.flowrensic.v1.ConfigFieldR\x06fields\"\x86\x05\n" +
 	"\x17GetServerConfigResponse\x12:\n" +
 	"\vui_base_url\x18\x01 \x01(\v2\x1a.flowrensic.v1.ConfigFieldR\tuiBaseUrl\x12<\n" +
 	"\vclasses_off\x18\x02 \x03(\x0e2\x1b.flowrensic.v1.FindingClassR\n" +
@@ -534,7 +867,41 @@ const file_flowrensic_v1_server_config_proto_rawDesc = "" +
 	"\vblobs_in_s3\x18\t \x01(\bR\tblobsInS3\x129\n" +
 	"\n" +
 	"started_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\"8\n" +
+	" \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x120\n" +
+	"\alicense\x18\v \x01(\v2\x16.flowrensic.v1.LicenseR\alicense\x12:\n" +
+	"\vusage_count\x18\f \x01(\v2\x19.flowrensic.v1.UsageCountR\n" +
+	"usageCount\"\x82\x01\n" +
+	"\n" +
+	"UsageCount\x12\x0e\n" +
+	"\x02on\x18\x01 \x01(\bR\x02on\x12\x10\n" +
+	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1f\n" +
+	"\voff_setting\x18\x03 \x01(\tR\n" +
+	"offSetting\x121\n" +
+	"\x04last\x18\x04 \x01(\v2\x1d.flowrensic.v1.UsageCountSentR\x04last\"\x9f\x01\n" +
+	"\x0eUsageCountSent\x123\n" +
+	"\asent_at\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x06sentAt\x12\x12\n" +
+	"\x04body\x18\x02 \x01(\tR\x04body\x12\x16\n" +
+	"\x06status\x18\x03 \x01(\x05R\x06status\x12\x16\n" +
+	"\x06answer\x18\x04 \x01(\tR\x06answer\x12\x14\n" +
+	"\x05error\x18\x05 \x01(\tR\x05error\"\x9e\x04\n" +
+	"\aLicense\x12\x14\n" +
+	"\x05stage\x18\x01 \x01(\tR\x05stage\x12\x1a\n" +
+	"\bcustomer\x18\x02 \x01(\tR\bcustomer\x12\x12\n" +
+	"\x04plan\x18\x03 \x01(\tR\x04plan\x12 \n" +
+	"\fmax_envs_num\x18\x04 \x01(\x05R\n" +
+	"maxEnvsNum\x12(\n" +
+	"\x10history_days_num\x18\x05 \x01(\x05R\x0ehistoryDaysNum\x12\x16\n" +
+	"\x06alerts\x18\x06 \x01(\bR\x06alerts\x12\x1b\n" +
+	"\tall_rules\x18\a \x01(\bR\ballRules\x127\n" +
+	"\tissued_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\bissuedAt\x129\n" +
+	"\n" +
+	"expires_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\x12\x1b\n" +
+	"\tdays_left\x18\n" +
+	" \x01(\x05R\bdaysLeft\x126\n" +
+	"\bdeadline\x18\v \x01(\v2\x1a.google.protobuf.TimestampR\bdeadline\x12B\n" +
+	"\x0fdata_kept_until\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\rdataKeptUntil\x12\"\n" +
+	"\renvs_left_out\x18\r \x03(\tR\venvsLeftOut\x12\x1b\n" +
+	"\tkeys_page\x18\x0e \x01(\tR\bkeysPage\"8\n" +
 	"\bDataPath\x12\x18\n" +
 	"\asetting\x18\x01 \x01(\tR\asetting\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\"\xf9\x02\n" +
@@ -553,8 +920,8 @@ const file_flowrensic_v1_server_config_proto_rawDesc = "" +
 	"\n" +
 	"started_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x123\n" +
 	"\adone_at\x18\n" +
-	" \x01(\v2\x1a.google.protobuf.TimestampR\x06doneAtB\xba\x01\n" +
-	"\x11com.flowrensic.v1B\x11ServerConfigProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	" \x01(\v2\x1a.google.protobuf.TimestampR\x06doneAtB\xd1\x01\n" +
+	"\x11com.flowrensic.v1B\x11ServerConfigProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_server_config_proto_rawDescOnce sync.Once
@@ -568,35 +935,46 @@ func file_flowrensic_v1_server_config_proto_rawDescGZIP() []byte {
 	return file_flowrensic_v1_server_config_proto_rawDescData
 }
 
-var file_flowrensic_v1_server_config_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_flowrensic_v1_server_config_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_flowrensic_v1_server_config_proto_goTypes = []any{
 	(*GetServerConfigRequest)(nil),  // 0: flowrensic.v1.GetServerConfigRequest
 	(*ConfigField)(nil),             // 1: flowrensic.v1.ConfigField
 	(*ConfigEnv)(nil),               // 2: flowrensic.v1.ConfigEnv
 	(*GetServerConfigResponse)(nil), // 3: flowrensic.v1.GetServerConfigResponse
-	(*DataPath)(nil),                // 4: flowrensic.v1.DataPath
-	(*StoredRule)(nil),              // 5: flowrensic.v1.StoredRule
-	(FindingClass)(0),               // 6: flowrensic.v1.FindingClass
-	(*Threshold)(nil),               // 7: flowrensic.v1.Threshold
-	(*timestamppb.Timestamp)(nil),   // 8: google.protobuf.Timestamp
+	(*UsageCount)(nil),              // 4: flowrensic.v1.UsageCount
+	(*UsageCountSent)(nil),          // 5: flowrensic.v1.UsageCountSent
+	(*License)(nil),                 // 6: flowrensic.v1.License
+	(*DataPath)(nil),                // 7: flowrensic.v1.DataPath
+	(*StoredRule)(nil),              // 8: flowrensic.v1.StoredRule
+	(FindingClass)(0),               // 9: flowrensic.v1.FindingClass
+	(*Threshold)(nil),               // 10: flowrensic.v1.Threshold
+	(*timestamppb.Timestamp)(nil),   // 11: google.protobuf.Timestamp
 }
 var file_flowrensic_v1_server_config_proto_depIdxs = []int32{
 	1,  // 0: flowrensic.v1.ConfigEnv.fields:type_name -> flowrensic.v1.ConfigField
 	1,  // 1: flowrensic.v1.GetServerConfigResponse.ui_base_url:type_name -> flowrensic.v1.ConfigField
-	6,  // 2: flowrensic.v1.GetServerConfigResponse.classes_off:type_name -> flowrensic.v1.FindingClass
-	7,  // 3: flowrensic.v1.GetServerConfigResponse.thresholds:type_name -> flowrensic.v1.Threshold
+	9,  // 2: flowrensic.v1.GetServerConfigResponse.classes_off:type_name -> flowrensic.v1.FindingClass
+	10, // 3: flowrensic.v1.GetServerConfigResponse.thresholds:type_name -> flowrensic.v1.Threshold
 	2,  // 4: flowrensic.v1.GetServerConfigResponse.envs:type_name -> flowrensic.v1.ConfigEnv
 	1,  // 5: flowrensic.v1.GetServerConfigResponse.settings:type_name -> flowrensic.v1.ConfigField
-	5,  // 6: flowrensic.v1.GetServerConfigResponse.stored_rules:type_name -> flowrensic.v1.StoredRule
-	4,  // 7: flowrensic.v1.GetServerConfigResponse.data_paths:type_name -> flowrensic.v1.DataPath
-	8,  // 8: flowrensic.v1.GetServerConfigResponse.started_at:type_name -> google.protobuf.Timestamp
-	8,  // 9: flowrensic.v1.StoredRule.started_at:type_name -> google.protobuf.Timestamp
-	8,  // 10: flowrensic.v1.StoredRule.done_at:type_name -> google.protobuf.Timestamp
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	8,  // 6: flowrensic.v1.GetServerConfigResponse.stored_rules:type_name -> flowrensic.v1.StoredRule
+	7,  // 7: flowrensic.v1.GetServerConfigResponse.data_paths:type_name -> flowrensic.v1.DataPath
+	11, // 8: flowrensic.v1.GetServerConfigResponse.started_at:type_name -> google.protobuf.Timestamp
+	6,  // 9: flowrensic.v1.GetServerConfigResponse.license:type_name -> flowrensic.v1.License
+	4,  // 10: flowrensic.v1.GetServerConfigResponse.usage_count:type_name -> flowrensic.v1.UsageCount
+	5,  // 11: flowrensic.v1.UsageCount.last:type_name -> flowrensic.v1.UsageCountSent
+	11, // 12: flowrensic.v1.UsageCountSent.sent_at:type_name -> google.protobuf.Timestamp
+	11, // 13: flowrensic.v1.License.issued_at:type_name -> google.protobuf.Timestamp
+	11, // 14: flowrensic.v1.License.expires_at:type_name -> google.protobuf.Timestamp
+	11, // 15: flowrensic.v1.License.deadline:type_name -> google.protobuf.Timestamp
+	11, // 16: flowrensic.v1.License.data_kept_until:type_name -> google.protobuf.Timestamp
+	11, // 17: flowrensic.v1.StoredRule.started_at:type_name -> google.protobuf.Timestamp
+	11, // 18: flowrensic.v1.StoredRule.done_at:type_name -> google.protobuf.Timestamp
+	19, // [19:19] is the sub-list for method output_type
+	19, // [19:19] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_flowrensic_v1_server_config_proto_init() }
@@ -611,7 +989,7 @@ func file_flowrensic_v1_server_config_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_flowrensic_v1_server_config_proto_rawDesc), len(file_flowrensic_v1_server_config_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

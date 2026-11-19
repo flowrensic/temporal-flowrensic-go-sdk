@@ -29,7 +29,7 @@ type WorkflowTypeRow struct {
 	WorkflowType string                 `protobuf:"bytes,1,opt,name=workflow_type,json=workflowType,proto3" json:"workflow_type,omitempty"`
 	TotalRuns    int64                  `protobuf:"varint,2,opt,name=total_runs,json=totalRuns,proto3" json:"total_runs,omitempty"`
 	FailedRuns   int64                  `protobuf:"varint,3,opt,name=failed_runs,json=failedRuns,proto3" json:"failed_runs,omitempty"`
-	WedgedRuns   int64                  `protobuf:"varint,4,opt,name=wedged_runs,json=wedgedRuns,proto3" json:"wedged_runs,omitempty"`
+	StuckRuns    int64                  `protobuf:"varint,4,opt,name=stuck_runs,json=stuckRuns,proto3" json:"stuck_runs,omitempty"`
 	RunsPerHour  float64                `protobuf:"fixed64,5,opt,name=runs_per_hour,json=runsPerHour,proto3" json:"runs_per_hour,omitempty"`
 	// failure_rate is failed runs over closed runs, in percent.
 	FailureRate    float64 `protobuf:"fixed64,6,opt,name=failure_rate,json=failureRate,proto3" json:"failure_rate,omitempty"`
@@ -115,9 +115,9 @@ func (x *WorkflowTypeRow) GetFailedRuns() int64 {
 	return 0
 }
 
-func (x *WorkflowTypeRow) GetWedgedRuns() int64 {
+func (x *WorkflowTypeRow) GetStuckRuns() int64 {
 	if x != nil {
-		return x.WedgedRuns
+		return x.StuckRuns
 	}
 	return 0
 }
@@ -280,8 +280,26 @@ type CostSummary struct {
 	LastWindowCovered       bool `protobuf:"varint,8,opt,name=last_window_covered,json=lastWindowCovered,proto3" json:"last_window_covered,omitempty"`
 	LastThreeWindowsCovered bool `protobuf:"varint,9,opt,name=last_three_windows_covered,json=lastThreeWindowsCovered,proto3" json:"last_three_windows_covered,omitempty"`
 	WindowBeforeCovered     bool `protobuf:"varint,10,opt,name=window_before_covered,json=windowBeforeCovered,proto3" json:"window_before_covered,omitempty"`
-	unknownFields           protoimpl.UnknownFields
-	sizeCache               protoimpl.SizeCache
+	// catching_up is set when a pulled namespace of the env is still pulling
+	// its past runs from the engine. No window is covered then.
+	CatchingUp bool `protobuf:"varint,11,opt,name=catching_up,json=catchingUp,proto3" json:"catching_up,omitempty"`
+	// pull_failing is set when the last pull of a pulled namespace of the env
+	// failed, so its newest runs may be missing. No window is covered then.
+	PullFailing bool `protobuf:"varint,12,opt,name=pull_failing,json=pullFailing,proto3" json:"pull_failing,omitempty"`
+	// from_usage_records is set when the costs and their cover come from
+	// Temporal Cloud's usage records, the billed actions per namespace per day,
+	// and not from history. A window is then covered when the records hold each
+	// of its days but the last two.
+	FromUsageRecords bool `protobuf:"varint,13,opt,name=from_usage_records,json=fromUsageRecords,proto3" json:"from_usage_records,omitempty"`
+	// no_data_reason says why a window of a Cloud env is not covered, empty
+	// when every window is covered or the env is not on Cloud:
+	// no_usage_key, the env has no key for Cloud's usage records, a key with
+	// the Finance Admin role, so the totals come from history;
+	// usage_key_refused, Cloud refused that key, so the totals come from
+	// history; usage_read_failed, the last read of the records failed.
+	NoDataReason  string `protobuf:"bytes,14,opt,name=no_data_reason,json=noDataReason,proto3" json:"no_data_reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *CostSummary) Reset() {
@@ -384,6 +402,34 @@ func (x *CostSummary) GetWindowBeforeCovered() bool {
 	return false
 }
 
+func (x *CostSummary) GetCatchingUp() bool {
+	if x != nil {
+		return x.CatchingUp
+	}
+	return false
+}
+
+func (x *CostSummary) GetPullFailing() bool {
+	if x != nil {
+		return x.PullFailing
+	}
+	return false
+}
+
+func (x *CostSummary) GetFromUsageRecords() bool {
+	if x != nil {
+		return x.FromUsageRecords
+	}
+	return false
+}
+
+func (x *CostSummary) GetNoDataReason() string {
+	if x != nil {
+		return x.NoDataReason
+	}
+	return ""
+}
+
 type ListWorkflowTypesRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// since is left out for the last 2 weeks, until for now.
@@ -482,9 +528,13 @@ type ListWorkflowTypesResponse struct {
 	Until *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=until,proto3" json:"until,omitempty"`
 	// cost is over the env asked for, every env when it is empty.
 	Cost *CostSummary `protobuf:"bytes,4,opt,name=cost,proto3" json:"cost,omitempty"`
-	// data_since is where the stored data starts: the first event of the oldest
-	// stored history or the start of the oldest attempt, whichever is earlier.
-	// Left out when nothing is stored.
+	// data_since is where the data of the env asked for starts, of every env when
+	// it is empty: for each pulled namespace, the first pull that worked less the
+	// engine's retention read with it, and the latest of those. Left out when the
+	// env has no pulled namespace, one of them has had no pull that worked, one
+	// of them is still pulling its past runs from the engine, or the last pull of
+	// one of them failed. It is never earlier than the close of the last run the
+	// retention job deleted from one of them.
 	DataSince *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=data_since,json=dataSince,proto3" json:"data_since,omitempty"`
 	// worker_names is every worker name on a queue of the range and the env,
 	// sorted, whatever worker_name asks for.
@@ -832,9 +882,15 @@ type GetWorkflowTypeResponse struct {
 	// data_since is as in ListWorkflowTypesResponse.
 	DataSince *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=data_since,json=dataSince,proto3" json:"data_since,omitempty"`
 	// Whether the list goes on after this page, and how to ask for the next.
-	Page          *PageResponse `protobuf:"bytes,8,opt,name=page,proto3" json:"page,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Page *PageResponse `protobuf:"bytes,8,opt,name=page,proto3" json:"page,omitempty"`
+	// catching_up and pull_failing are as in CostSummary, for the env asked for.
+	CatchingUp  bool `protobuf:"varint,9,opt,name=catching_up,json=catchingUp,proto3" json:"catching_up,omitempty"`
+	PullFailing bool `protobuf:"varint,10,opt,name=pull_failing,json=pullFailing,proto3" json:"pull_failing,omitempty"`
+	// For each finding of findings, in the same order, how many of its
+	// episodes and of its observations fall in the range.
+	FindingsInRange []*FindingInRange `protobuf:"bytes,11,rep,name=findings_in_range,json=findingsInRange,proto3" json:"findings_in_range,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *GetWorkflowTypeResponse) Reset() {
@@ -923,19 +979,103 @@ func (x *GetWorkflowTypeResponse) GetPage() *PageResponse {
 	return nil
 }
 
+func (x *GetWorkflowTypeResponse) GetCatchingUp() bool {
+	if x != nil {
+		return x.CatchingUp
+	}
+	return false
+}
+
+func (x *GetWorkflowTypeResponse) GetPullFailing() bool {
+	if x != nil {
+		return x.PullFailing
+	}
+	return false
+}
+
+func (x *GetWorkflowTypeResponse) GetFindingsInRange() []*FindingInRange {
+	if x != nil {
+		return x.FindingsInRange
+	}
+	return nil
+}
+
+// FindingInRange is how much of one finding falls in a range: its episodes
+// that started before the end of the range and ended after its start or go
+// on, and its observations whose time is in the range.
+type FindingInRange struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FindingId     string                 `protobuf:"bytes,1,opt,name=finding_id,json=findingId,proto3" json:"finding_id,omitempty"`
+	Episodes      int32                  `protobuf:"varint,2,opt,name=episodes,proto3" json:"episodes,omitempty"`
+	Observations  int32                  `protobuf:"varint,3,opt,name=observations,proto3" json:"observations,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FindingInRange) Reset() {
+	*x = FindingInRange{}
+	mi := &file_flowrensic_v1_workflow_types_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FindingInRange) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FindingInRange) ProtoMessage() {}
+
+func (x *FindingInRange) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_workflow_types_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FindingInRange.ProtoReflect.Descriptor instead.
+func (*FindingInRange) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_workflow_types_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *FindingInRange) GetFindingId() string {
+	if x != nil {
+		return x.FindingId
+	}
+	return ""
+}
+
+func (x *FindingInRange) GetEpisodes() int32 {
+	if x != nil {
+		return x.Episodes
+	}
+	return 0
+}
+
+func (x *FindingInRange) GetObservations() int32 {
+	if x != nil {
+		return x.Observations
+	}
+	return 0
+}
+
 var File_flowrensic_v1_workflow_types_proto protoreflect.FileDescriptor
 
 const file_flowrensic_v1_workflow_types_proto_rawDesc = "" +
 	"\n" +
-	"\"flowrensic/v1/workflow_types.proto\x12\rflowrensic.v1\x1a\x18flowrensic/v1/page.proto\x1a$flowrensic/v1/activity_metrics.proto\x1a\x1bflowrensic/v1/finding.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdd\x06\n" +
+	"\"flowrensic/v1/workflow_types.proto\x12\rflowrensic.v1\x1a\x18flowrensic/v1/page.proto\x1a$flowrensic/v1/activity_metrics.proto\x1a\x1bflowrensic/v1/finding.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xdb\x06\n" +
 	"\x0fWorkflowTypeRow\x12#\n" +
 	"\rworkflow_type\x18\x01 \x01(\tR\fworkflowType\x12\x1d\n" +
 	"\n" +
 	"total_runs\x18\x02 \x01(\x03R\ttotalRuns\x12\x1f\n" +
 	"\vfailed_runs\x18\x03 \x01(\x03R\n" +
-	"failedRuns\x12\x1f\n" +
-	"\vwedged_runs\x18\x04 \x01(\x03R\n" +
-	"wedgedRuns\x12\"\n" +
+	"failedRuns\x12\x1d\n" +
+	"\n" +
+	"stuck_runs\x18\x04 \x01(\x03R\tstuckRuns\x12\"\n" +
 	"\rruns_per_hour\x18\x05 \x01(\x01R\vrunsPerHour\x12!\n" +
 	"\ffailure_rate\x18\x06 \x01(\x01R\vfailureRate\x12(\n" +
 	"\x10has_failure_rate\x18\a \x01(\bR\x0ehasFailureRate\x12&\n" +
@@ -959,7 +1099,7 @@ const file_flowrensic_v1_workflow_types_proto_rawDesc = "" +
 	"\bcost_usd\x18\x15 \x01(\x01R\acostUsd\x12\x1f\n" +
 	"\vtask_queues\x18\x16 \x03(\tR\n" +
 	"taskQueues\x12!\n" +
-	"\fworker_names\x18\x17 \x03(\tR\vworkerNames\"\xd7\x03\n" +
+	"\fworker_names\x18\x17 \x03(\tR\vworkerNames\"\xef\x04\n" +
 	"\vCostSummary\x121\n" +
 	"\x15price_per_million_usd\x18\x01 \x01(\x01R\x12pricePerMillionUsd\x12%\n" +
 	"\x0ewindow_seconds\x18\x02 \x01(\x03R\rwindowSeconds\x12&\n" +
@@ -972,7 +1112,12 @@ const file_flowrensic_v1_workflow_types_proto_rawDesc = "" +
 	"\x13last_window_covered\x18\b \x01(\bR\x11lastWindowCovered\x12;\n" +
 	"\x1alast_three_windows_covered\x18\t \x01(\bR\x17lastThreeWindowsCovered\x122\n" +
 	"\x15window_before_covered\x18\n" +
-	" \x01(\bR\x13windowBeforeCovered\"\x80\x02\n" +
+	" \x01(\bR\x13windowBeforeCovered\x12\x1f\n" +
+	"\vcatching_up\x18\v \x01(\bR\n" +
+	"catchingUp\x12!\n" +
+	"\fpull_failing\x18\f \x01(\bR\vpullFailing\x12,\n" +
+	"\x12from_usage_records\x18\r \x01(\bR\x10fromUsageRecords\x12$\n" +
+	"\x0eno_data_reason\x18\x0e \x01(\tR\fnoDataReason\"\x80\x02\n" +
 	"\x18ListWorkflowTypesRequest\x120\n" +
 	"\x05since\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x05since\x120\n" +
 	"\x05until\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x05until\x12\x10\n" +
@@ -1010,7 +1155,7 @@ const file_flowrensic_v1_workflow_types_proto_rawDesc = "" +
 	"\x03env\x18\x04 \x01(\tR\x03env\x12\x1d\n" +
 	"\n" +
 	"all_stored\x18\x05 \x01(\bR\tallStored\x12.\n" +
-	"\x04page\x18\x06 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\xcc\x03\n" +
+	"\x04page\x18\x06 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\xdb\x04\n" +
 	"\x17GetWorkflowTypeResponse\x120\n" +
 	"\x03row\x18\x01 \x01(\v2\x1e.flowrensic.v1.WorkflowTypeRowR\x03row\x12:\n" +
 	"\bmessages\x18\x02 \x03(\v2\x1e.flowrensic.v1.WorkflowMessageR\bmessages\x12?\n" +
@@ -1022,8 +1167,18 @@ const file_flowrensic_v1_workflow_types_proto_rawDesc = "" +
 	"\x05until\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x05until\x129\n" +
 	"\n" +
 	"data_since\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\tdataSince\x12/\n" +
-	"\x04page\x18\b \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04pageB\xbb\x01\n" +
-	"\x11com.flowrensic.v1B\x12WorkflowTypesProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x04page\x18\b \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\x12\x1f\n" +
+	"\vcatching_up\x18\t \x01(\bR\n" +
+	"catchingUp\x12!\n" +
+	"\fpull_failing\x18\n" +
+	" \x01(\bR\vpullFailing\x12I\n" +
+	"\x11findings_in_range\x18\v \x03(\v2\x1d.flowrensic.v1.FindingInRangeR\x0ffindingsInRange\"o\n" +
+	"\x0eFindingInRange\x12\x1d\n" +
+	"\n" +
+	"finding_id\x18\x01 \x01(\tR\tfindingId\x12\x1a\n" +
+	"\bepisodes\x18\x02 \x01(\x05R\bepisodes\x12\"\n" +
+	"\fobservations\x18\x03 \x01(\x05R\fobservationsB\xd2\x01\n" +
+	"\x11com.flowrensic.v1B\x12WorkflowTypesProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_workflow_types_proto_rawDescOnce sync.Once
@@ -1037,7 +1192,7 @@ func file_flowrensic_v1_workflow_types_proto_rawDescGZIP() []byte {
 	return file_flowrensic_v1_workflow_types_proto_rawDescData
 }
 
-var file_flowrensic_v1_workflow_types_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_flowrensic_v1_workflow_types_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_flowrensic_v1_workflow_types_proto_goTypes = []any{
 	(*WorkflowTypeRow)(nil),           // 0: flowrensic.v1.WorkflowTypeRow
 	(*CostSummary)(nil),               // 1: flowrensic.v1.CostSummary
@@ -1047,40 +1202,42 @@ var file_flowrensic_v1_workflow_types_proto_goTypes = []any{
 	(*WorkflowActivity)(nil),          // 5: flowrensic.v1.WorkflowActivity
 	(*GetWorkflowTypeRequest)(nil),    // 6: flowrensic.v1.GetWorkflowTypeRequest
 	(*GetWorkflowTypeResponse)(nil),   // 7: flowrensic.v1.GetWorkflowTypeResponse
-	(*timestamppb.Timestamp)(nil),     // 8: google.protobuf.Timestamp
-	(*PageRequest)(nil),               // 9: flowrensic.v1.PageRequest
-	(*PageResponse)(nil),              // 10: flowrensic.v1.PageResponse
-	(*ActivityStats)(nil),             // 11: flowrensic.v1.ActivityStats
-	(*Finding)(nil),                   // 12: flowrensic.v1.Finding
+	(*FindingInRange)(nil),            // 8: flowrensic.v1.FindingInRange
+	(*timestamppb.Timestamp)(nil),     // 9: google.protobuf.Timestamp
+	(*PageRequest)(nil),               // 10: flowrensic.v1.PageRequest
+	(*PageResponse)(nil),              // 11: flowrensic.v1.PageResponse
+	(*ActivityStats)(nil),             // 12: flowrensic.v1.ActivityStats
+	(*Finding)(nil),                   // 13: flowrensic.v1.Finding
 }
 var file_flowrensic_v1_workflow_types_proto_depIdxs = []int32{
-	8,  // 0: flowrensic.v1.WorkflowTypeRow.oldest_open_started_at:type_name -> google.protobuf.Timestamp
-	8,  // 1: flowrensic.v1.ListWorkflowTypesRequest.since:type_name -> google.protobuf.Timestamp
-	8,  // 2: flowrensic.v1.ListWorkflowTypesRequest.until:type_name -> google.protobuf.Timestamp
-	9,  // 3: flowrensic.v1.ListWorkflowTypesRequest.page:type_name -> flowrensic.v1.PageRequest
+	9,  // 0: flowrensic.v1.WorkflowTypeRow.oldest_open_started_at:type_name -> google.protobuf.Timestamp
+	9,  // 1: flowrensic.v1.ListWorkflowTypesRequest.since:type_name -> google.protobuf.Timestamp
+	9,  // 2: flowrensic.v1.ListWorkflowTypesRequest.until:type_name -> google.protobuf.Timestamp
+	10, // 3: flowrensic.v1.ListWorkflowTypesRequest.page:type_name -> flowrensic.v1.PageRequest
 	0,  // 4: flowrensic.v1.ListWorkflowTypesResponse.types:type_name -> flowrensic.v1.WorkflowTypeRow
-	8,  // 5: flowrensic.v1.ListWorkflowTypesResponse.since:type_name -> google.protobuf.Timestamp
-	8,  // 6: flowrensic.v1.ListWorkflowTypesResponse.until:type_name -> google.protobuf.Timestamp
+	9,  // 5: flowrensic.v1.ListWorkflowTypesResponse.since:type_name -> google.protobuf.Timestamp
+	9,  // 6: flowrensic.v1.ListWorkflowTypesResponse.until:type_name -> google.protobuf.Timestamp
 	1,  // 7: flowrensic.v1.ListWorkflowTypesResponse.cost:type_name -> flowrensic.v1.CostSummary
-	8,  // 8: flowrensic.v1.ListWorkflowTypesResponse.data_since:type_name -> google.protobuf.Timestamp
-	10, // 9: flowrensic.v1.ListWorkflowTypesResponse.page:type_name -> flowrensic.v1.PageResponse
-	11, // 10: flowrensic.v1.WorkflowActivity.stats:type_name -> flowrensic.v1.ActivityStats
-	8,  // 11: flowrensic.v1.GetWorkflowTypeRequest.since:type_name -> google.protobuf.Timestamp
-	8,  // 12: flowrensic.v1.GetWorkflowTypeRequest.until:type_name -> google.protobuf.Timestamp
-	9,  // 13: flowrensic.v1.GetWorkflowTypeRequest.page:type_name -> flowrensic.v1.PageRequest
+	9,  // 8: flowrensic.v1.ListWorkflowTypesResponse.data_since:type_name -> google.protobuf.Timestamp
+	11, // 9: flowrensic.v1.ListWorkflowTypesResponse.page:type_name -> flowrensic.v1.PageResponse
+	12, // 10: flowrensic.v1.WorkflowActivity.stats:type_name -> flowrensic.v1.ActivityStats
+	9,  // 11: flowrensic.v1.GetWorkflowTypeRequest.since:type_name -> google.protobuf.Timestamp
+	9,  // 12: flowrensic.v1.GetWorkflowTypeRequest.until:type_name -> google.protobuf.Timestamp
+	10, // 13: flowrensic.v1.GetWorkflowTypeRequest.page:type_name -> flowrensic.v1.PageRequest
 	0,  // 14: flowrensic.v1.GetWorkflowTypeResponse.row:type_name -> flowrensic.v1.WorkflowTypeRow
 	4,  // 15: flowrensic.v1.GetWorkflowTypeResponse.messages:type_name -> flowrensic.v1.WorkflowMessage
 	5,  // 16: flowrensic.v1.GetWorkflowTypeResponse.activities:type_name -> flowrensic.v1.WorkflowActivity
-	12, // 17: flowrensic.v1.GetWorkflowTypeResponse.findings:type_name -> flowrensic.v1.Finding
-	8,  // 18: flowrensic.v1.GetWorkflowTypeResponse.since:type_name -> google.protobuf.Timestamp
-	8,  // 19: flowrensic.v1.GetWorkflowTypeResponse.until:type_name -> google.protobuf.Timestamp
-	8,  // 20: flowrensic.v1.GetWorkflowTypeResponse.data_since:type_name -> google.protobuf.Timestamp
-	10, // 21: flowrensic.v1.GetWorkflowTypeResponse.page:type_name -> flowrensic.v1.PageResponse
-	22, // [22:22] is the sub-list for method output_type
-	22, // [22:22] is the sub-list for method input_type
-	22, // [22:22] is the sub-list for extension type_name
-	22, // [22:22] is the sub-list for extension extendee
-	0,  // [0:22] is the sub-list for field type_name
+	13, // 17: flowrensic.v1.GetWorkflowTypeResponse.findings:type_name -> flowrensic.v1.Finding
+	9,  // 18: flowrensic.v1.GetWorkflowTypeResponse.since:type_name -> google.protobuf.Timestamp
+	9,  // 19: flowrensic.v1.GetWorkflowTypeResponse.until:type_name -> google.protobuf.Timestamp
+	9,  // 20: flowrensic.v1.GetWorkflowTypeResponse.data_since:type_name -> google.protobuf.Timestamp
+	11, // 21: flowrensic.v1.GetWorkflowTypeResponse.page:type_name -> flowrensic.v1.PageResponse
+	8,  // 22: flowrensic.v1.GetWorkflowTypeResponse.findings_in_range:type_name -> flowrensic.v1.FindingInRange
+	23, // [23:23] is the sub-list for method output_type
+	23, // [23:23] is the sub-list for method input_type
+	23, // [23:23] is the sub-list for extension type_name
+	23, // [23:23] is the sub-list for extension extendee
+	0,  // [0:23] is the sub-list for field type_name
 }
 
 func init() { file_flowrensic_v1_workflow_types_proto_init() }
@@ -1097,7 +1254,7 @@ func file_flowrensic_v1_workflow_types_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_flowrensic_v1_workflow_types_proto_rawDesc), len(file_flowrensic_v1_workflow_types_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

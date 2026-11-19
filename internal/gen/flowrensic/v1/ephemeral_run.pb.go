@@ -626,8 +626,13 @@ type EphemeralRunHandshakeResponse struct {
 	// SkipHistories is whether this server pulls the histories of the env from
 	// the engine itself, so the worker sends none. False sends them.
 	SkipHistories bool `protobuf:"varint,3,opt,name=skip_histories,json=skipHistories,proto3" json:"skip_histories,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	// EngineMetricNames are the series of the engine's page this server reads.
+	// The worker sends a series line whose name is listed, and a HELP or TYPE
+	// line whose name, or that name with _bucket, _sum or _count, is listed, and
+	// leaves every other line out. Empty sends the whole page.
+	EngineMetricNames []string `protobuf:"bytes,4,rep,name=engine_metric_names,json=engineMetricNames,proto3" json:"engine_metric_names,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *EphemeralRunHandshakeResponse) Reset() {
@@ -679,6 +684,13 @@ func (x *EphemeralRunHandshakeResponse) GetSkipHistories() bool {
 		return x.SkipHistories
 	}
 	return false
+}
+
+func (x *EphemeralRunHandshakeResponse) GetEngineMetricNames() []string {
+	if x != nil {
+		return x.EngineMetricNames
+	}
+	return nil
 }
 
 // IngestEphemeralRunMetricsRequest carries the engine's exposition text as the
@@ -797,7 +809,11 @@ type IngestEngineHistoryRequest struct {
 	// The attempt the engine's pending workflow task of the run is on, as the
 	// engine described the run when the worker read the history. Zero when it
 	// waits on no workflow task.
-	TaskAttempt   int32 `protobuf:"varint,8,opt,name=task_attempt,json=taskAttempt,proto3" json:"task_attempt,omitempty"`
+	TaskAttempt int32 `protobuf:"varint,8,opt,name=task_attempt,json=taskAttempt,proto3" json:"task_attempt,omitempty"`
+	// The worker that sends the history: its id, and its worker name, empty
+	// when it has none. Left empty, the worker is not known.
+	WorkerId      string `protobuf:"bytes,9,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
+	WorkerName    string `protobuf:"bytes,10,opt,name=worker_name,json=workerName,proto3" json:"worker_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -872,6 +888,20 @@ func (x *IngestEngineHistoryRequest) GetTaskAttempt() int32 {
 		return x.TaskAttempt
 	}
 	return 0
+}
+
+func (x *IngestEngineHistoryRequest) GetWorkerId() string {
+	if x != nil {
+		return x.WorkerId
+	}
+	return ""
+}
+
+func (x *IngestEngineHistoryRequest) GetWorkerName() string {
+	if x != nil {
+		return x.WorkerName
+	}
+	return ""
 }
 
 type IngestEngineHistoryResponse struct {
@@ -1122,7 +1152,11 @@ type OldWorkersRequest struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Version string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	// The page of the list asked for.
-	Page          *PageRequest `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	Page *PageRequest `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	// Sdk, such as node/0.6.62, asks in place of version which workers are up
+	// with an SDK other than it: of its language on another version, or with
+	// no SDK version. Exactly one of version and sdk is set.
+	Sdk           string `protobuf:"bytes,4,opt,name=sdk,proto3" json:"sdk,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1171,6 +1205,13 @@ func (x *OldWorkersRequest) GetPage() *PageRequest {
 	return nil
 }
 
+func (x *OldWorkersRequest) GetSdk() string {
+	if x != nil {
+		return x.Sdk
+	}
+	return ""
+}
+
 // OldWorker is one worker that is up.
 type OldWorker struct {
 	state        protoimpl.MessageState `protogen:"open.v1"`
@@ -1178,7 +1219,10 @@ type OldWorker struct {
 	Version      string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
 	EphemeralRun string                 `protobuf:"bytes,3,opt,name=ephemeral_run,json=ephemeralRun,proto3" json:"ephemeral_run,omitempty"`
 	// LastSeen is when the worker was last heard from.
-	LastSeen      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
+	LastSeen *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
+	// Sdk is the language and version of the SDK the worker runs, as its
+	// Flowrensic-Sdk header sent it, empty when it sent none.
+	Sdk           string `protobuf:"bytes,5,opt,name=sdk,proto3" json:"sdk,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1239,6 +1283,13 @@ func (x *OldWorker) GetLastSeen() *timestamppb.Timestamp {
 		return x.LastSeen
 	}
 	return nil
+}
+
+func (x *OldWorker) GetSdk() string {
+	if x != nil {
+		return x.Sdk
+	}
+	return ""
 }
 
 type OldWorkersResponse struct {
@@ -1534,6 +1585,451 @@ func (x *EphemeralRunMetricsResponse) GetPage() *PageResponse {
 	return nil
 }
 
+// EphemeralRunSummary is one run of an ephemeral env. ended_at is when its
+// last data arrived. replay_result is passed, failed, or empty when the run
+// sent no replay result yet.
+type EphemeralRunSummary struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Env          string                 `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`
+	EphemeralRun string                 `protobuf:"bytes,2,opt,name=ephemeral_run,json=ephemeralRun,proto3" json:"ephemeral_run,omitempty"`
+	StartedAt    *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	EndedAt      *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=ended_at,json=endedAt,proto3" json:"ended_at,omitempty"`
+	ReplayResult string                 `protobuf:"bytes,5,opt,name=replay_result,json=replayResult,proto3" json:"replay_result,omitempty"`
+	// workers is how many different worker names the run sent attempts from.
+	Workers int32 `protobuf:"varint,6,opt,name=workers,proto3" json:"workers,omitempty"`
+	// workflow_types is how many different workflow types the replay set calls
+	// of the run returned at least one history of.
+	WorkflowTypes int32 `protobuf:"varint,7,opt,name=workflow_types,json=workflowTypes,proto3" json:"workflow_types,omitempty"`
+	// history_files is how many histories those calls returned, added up.
+	HistoryFiles int32 `protobuf:"varint,8,opt,name=history_files,json=historyFiles,proto3" json:"history_files,omitempty"`
+	// sdks is the SDK of each worker kept under the run, each once, sorted,
+	// empty for a worker that sent no SDK version.
+	Sdks          []string `protobuf:"bytes,9,rep,name=sdks,proto3" json:"sdks,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EphemeralRunSummary) Reset() {
+	*x = EphemeralRunSummary{}
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EphemeralRunSummary) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EphemeralRunSummary) ProtoMessage() {}
+
+func (x *EphemeralRunSummary) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EphemeralRunSummary.ProtoReflect.Descriptor instead.
+func (*EphemeralRunSummary) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_ephemeral_run_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *EphemeralRunSummary) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
+func (x *EphemeralRunSummary) GetEphemeralRun() string {
+	if x != nil {
+		return x.EphemeralRun
+	}
+	return ""
+}
+
+func (x *EphemeralRunSummary) GetStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartedAt
+	}
+	return nil
+}
+
+func (x *EphemeralRunSummary) GetEndedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.EndedAt
+	}
+	return nil
+}
+
+func (x *EphemeralRunSummary) GetReplayResult() string {
+	if x != nil {
+		return x.ReplayResult
+	}
+	return ""
+}
+
+func (x *EphemeralRunSummary) GetWorkers() int32 {
+	if x != nil {
+		return x.Workers
+	}
+	return 0
+}
+
+func (x *EphemeralRunSummary) GetWorkflowTypes() int32 {
+	if x != nil {
+		return x.WorkflowTypes
+	}
+	return 0
+}
+
+func (x *EphemeralRunSummary) GetHistoryFiles() int32 {
+	if x != nil {
+		return x.HistoryFiles
+	}
+	return 0
+}
+
+func (x *EphemeralRunSummary) GetSdks() []string {
+	if x != nil {
+		return x.Sdks
+	}
+	return nil
+}
+
+type ListEphemeralRunSummariesRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// An empty env spans every ephemeral env.
+	Env           string       `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`
+	Page          *PageRequest `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListEphemeralRunSummariesRequest) Reset() {
+	*x = ListEphemeralRunSummariesRequest{}
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListEphemeralRunSummariesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListEphemeralRunSummariesRequest) ProtoMessage() {}
+
+func (x *ListEphemeralRunSummariesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListEphemeralRunSummariesRequest.ProtoReflect.Descriptor instead.
+func (*ListEphemeralRunSummariesRequest) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_ephemeral_run_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *ListEphemeralRunSummariesRequest) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
+func (x *ListEphemeralRunSummariesRequest) GetPage() *PageRequest {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+type ListEphemeralRunSummariesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Runs  []*EphemeralRunSummary `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
+	Page  *PageResponse          `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	// envs are the ephemeral envs of the config, the ones the list can be
+	// filtered by.
+	Envs          []string `protobuf:"bytes,3,rep,name=envs,proto3" json:"envs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListEphemeralRunSummariesResponse) Reset() {
+	*x = ListEphemeralRunSummariesResponse{}
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListEphemeralRunSummariesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListEphemeralRunSummariesResponse) ProtoMessage() {}
+
+func (x *ListEphemeralRunSummariesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListEphemeralRunSummariesResponse.ProtoReflect.Descriptor instead.
+func (*ListEphemeralRunSummariesResponse) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_ephemeral_run_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ListEphemeralRunSummariesResponse) GetRuns() []*EphemeralRunSummary {
+	if x != nil {
+		return x.Runs
+	}
+	return nil
+}
+
+func (x *ListEphemeralRunSummariesResponse) GetPage() *PageResponse {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ListEphemeralRunSummariesResponse) GetEnvs() []string {
+	if x != nil {
+		return x.Envs
+	}
+	return nil
+}
+
+type DeleteEphemeralRunRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Env           string                 `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`
+	EphemeralRun  string                 `protobuf:"bytes,2,opt,name=ephemeral_run,json=ephemeralRun,proto3" json:"ephemeral_run,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteEphemeralRunRequest) Reset() {
+	*x = DeleteEphemeralRunRequest{}
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteEphemeralRunRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteEphemeralRunRequest) ProtoMessage() {}
+
+func (x *DeleteEphemeralRunRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteEphemeralRunRequest.ProtoReflect.Descriptor instead.
+func (*DeleteEphemeralRunRequest) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_ephemeral_run_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *DeleteEphemeralRunRequest) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
+func (x *DeleteEphemeralRunRequest) GetEphemeralRun() string {
+	if x != nil {
+		return x.EphemeralRun
+	}
+	return ""
+}
+
+type DeleteEphemeralRunResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// rows is how many rows went, the run itself included.
+	Rows          int64 `protobuf:"varint,1,opt,name=rows,proto3" json:"rows,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteEphemeralRunResponse) Reset() {
+	*x = DeleteEphemeralRunResponse{}
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteEphemeralRunResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteEphemeralRunResponse) ProtoMessage() {}
+
+func (x *DeleteEphemeralRunResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteEphemeralRunResponse.ProtoReflect.Descriptor instead.
+func (*DeleteEphemeralRunResponse) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_ephemeral_run_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *DeleteEphemeralRunResponse) GetRows() int64 {
+	if x != nil {
+		return x.Rows
+	}
+	return 0
+}
+
+type GetEphemeralRunSummaryRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The page of the replay results asked for.
+	Page          *PageRequest `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetEphemeralRunSummaryRequest) Reset() {
+	*x = GetEphemeralRunSummaryRequest{}
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetEphemeralRunSummaryRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetEphemeralRunSummaryRequest) ProtoMessage() {}
+
+func (x *GetEphemeralRunSummaryRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetEphemeralRunSummaryRequest.ProtoReflect.Descriptor instead.
+func (*GetEphemeralRunSummaryRequest) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_ephemeral_run_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *GetEphemeralRunSummaryRequest) GetPage() *PageRequest {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+type GetEphemeralRunSummaryResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Run   *EphemeralRunSummary   `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
+	// outcome is passed or failed. It is failed only when a replay result of
+	// the run failed.
+	Outcome string `protobuf:"bytes,2,opt,name=outcome,proto3" json:"outcome,omitempty"`
+	// results are the replay results the run sent, newest first.
+	Results       []*ReplayResult `protobuf:"bytes,3,rep,name=results,proto3" json:"results,omitempty"`
+	Page          *PageResponse   `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetEphemeralRunSummaryResponse) Reset() {
+	*x = GetEphemeralRunSummaryResponse{}
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetEphemeralRunSummaryResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetEphemeralRunSummaryResponse) ProtoMessage() {}
+
+func (x *GetEphemeralRunSummaryResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_ephemeral_run_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetEphemeralRunSummaryResponse.ProtoReflect.Descriptor instead.
+func (*GetEphemeralRunSummaryResponse) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_ephemeral_run_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *GetEphemeralRunSummaryResponse) GetRun() *EphemeralRunSummary {
+	if x != nil {
+		return x.Run
+	}
+	return nil
+}
+
+func (x *GetEphemeralRunSummaryResponse) GetOutcome() string {
+	if x != nil {
+		return x.Outcome
+	}
+	return ""
+}
+
+func (x *GetEphemeralRunSummaryResponse) GetResults() []*ReplayResult {
+	if x != nil {
+		return x.Results
+	}
+	return nil
+}
+
+func (x *GetEphemeralRunSummaryResponse) GetPage() *PageResponse {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
 var File_flowrensic_v1_ephemeral_run_proto protoreflect.FileDescriptor
 
 const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
@@ -1596,18 +2092,19 @@ const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
 	"\x0fmetrics_address\x18\x03 \x01(\tR\x0emetricsAddress\x12\x1b\n" +
 	"\tworker_id\x18\x04 \x01(\tR\bworkerId\x12\x18\n" +
 	"\aversion\x18\x05 \x01(\tR\aversion\x12X\n" +
-	"\x15workflow_interceptors\x18\x06 \x01(\v2#.flowrensic.v1.WorkflowInterceptorsR\x14workflowInterceptorsJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"\x8b\x01\n" +
+	"\x15workflow_interceptors\x18\x06 \x01(\v2#.flowrensic.v1.WorkflowInterceptorsR\x14workflowInterceptorsJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"\xbb\x01\n" +
 	"\x1dEphemeralRunHandshakeResponse\x12\x18\n" +
 	"\aforward\x18\x01 \x01(\bR\aforward\x12)\n" +
 	"\x10interval_seconds\x18\x02 \x01(\x05R\x0fintervalSeconds\x12%\n" +
-	"\x0eskip_histories\x18\x03 \x01(\bR\rskipHistories\"\x8f\x01\n" +
+	"\x0eskip_histories\x18\x03 \x01(\bR\rskipHistories\x12.\n" +
+	"\x13engine_metric_names\x18\x04 \x03(\tR\x11engineMetricNames\"\x8f\x01\n" +
 	" IngestEphemeralRunMetricsRequest\x12\x1e\n" +
 	"\n" +
 	"exposition\x18\x03 \x01(\tR\n" +
 	"exposition\x12\x1b\n" +
 	"\tworker_id\x18\x04 \x01(\tR\bworkerIdJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"?\n" +
 	"!IngestEphemeralRunMetricsResponse\x12\x1a\n" +
-	"\baccepted\x18\x01 \x01(\x05R\baccepted\"\xf1\x01\n" +
+	"\baccepted\x18\x01 \x01(\x05R\baccepted\"\xaf\x02\n" +
 	"\x1aIngestEngineHistoryRequest\x12\x15\n" +
 	"\x06run_id\x18\x03 \x01(\tR\x05runId\x12\x10\n" +
 	"\x03raw\x18\x04 \x01(\fR\x03raw\x12\x18\n" +
@@ -1615,7 +2112,11 @@ const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
 	"\tnamespace\x18\x06 \x01(\tR\tnamespace\x12\x1f\n" +
 	"\vworkflow_id\x18\a \x01(\tR\n" +
 	"workflowId\x12!\n" +
-	"\ftask_attempt\x18\b \x01(\x05R\vtaskAttemptJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"L\n" +
+	"\ftask_attempt\x18\b \x01(\x05R\vtaskAttempt\x12\x1b\n" +
+	"\tworker_id\x18\t \x01(\tR\bworkerId\x12\x1f\n" +
+	"\vworker_name\x18\n" +
+	" \x01(\tR\n" +
+	"workerNameJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"L\n" +
 	"\x1bIngestEngineHistoryResponse\x12\x15\n" +
 	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12\x16\n" +
 	"\x06events\x18\x02 \x01(\x05R\x06events\"\x84\x01\n" +
@@ -1627,15 +2128,17 @@ const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
 	"\tworker_id\x18\x03 \x01(\tR\bworkerId\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\tR\aversion\x12X\n" +
 	"\x15workflow_interceptors\x18\x05 \x01(\v2#.flowrensic.v1.WorkflowInterceptorsR\x14workflowInterceptorsJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"\x14\n" +
-	"\x12WorkerBeatResponse\"h\n" +
+	"\x12WorkerBeatResponse\"z\n" +
 	"\x11OldWorkersRequest\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12.\n" +
-	"\x04page\x18\x03 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04pageJ\x04\b\x01\x10\x02R\x03env\"\xa0\x01\n" +
+	"\x04page\x18\x03 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\x12\x10\n" +
+	"\x03sdk\x18\x04 \x01(\tR\x03sdkJ\x04\b\x01\x10\x02R\x03env\"\xb2\x01\n" +
 	"\tOldWorker\x12\x1b\n" +
 	"\tworker_id\x18\x01 \x01(\tR\bworkerId\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12#\n" +
 	"\rephemeral_run\x18\x03 \x01(\tR\fephemeralRun\x127\n" +
-	"\tlast_seen\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\"\x8f\x01\n" +
+	"\tlast_seen\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\blastSeen\x12\x10\n" +
+	"\x03sdk\x18\x05 \x01(\tR\x03sdk\"\x8f\x01\n" +
 	"\x12OldWorkersResponse\x12\x14\n" +
 	"\x05count\x18\x01 \x01(\x05R\x05count\x122\n" +
 	"\aworkers\x18\x02 \x03(\v2\x18.flowrensic.v1.OldWorkerR\aworkers\x12/\n" +
@@ -1654,8 +2157,38 @@ const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
 	"\x04page\x18\x04 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\x8b\x01\n" +
 	"\x1bEphemeralRunMetricsResponse\x12;\n" +
 	"\ametrics\x18\x01 \x03(\v2!.flowrensic.v1.EphemeralRunMetricR\ametrics\x12/\n" +
-	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04pageB\xba\x01\n" +
-	"\x11com.flowrensic.v1B\x11EphemeralRunProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\"\xdd\x02\n" +
+	"\x13EphemeralRunSummary\x12\x10\n" +
+	"\x03env\x18\x01 \x01(\tR\x03env\x12#\n" +
+	"\rephemeral_run\x18\x02 \x01(\tR\fephemeralRun\x129\n" +
+	"\n" +
+	"started_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x125\n" +
+	"\bended_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\aendedAt\x12#\n" +
+	"\rreplay_result\x18\x05 \x01(\tR\freplayResult\x12\x18\n" +
+	"\aworkers\x18\x06 \x01(\x05R\aworkers\x12%\n" +
+	"\x0eworkflow_types\x18\a \x01(\x05R\rworkflowTypes\x12#\n" +
+	"\rhistory_files\x18\b \x01(\x05R\fhistoryFiles\x12\x12\n" +
+	"\x04sdks\x18\t \x03(\tR\x04sdks\"d\n" +
+	" ListEphemeralRunSummariesRequest\x12\x10\n" +
+	"\x03env\x18\x01 \x01(\tR\x03env\x12.\n" +
+	"\x04page\x18\x02 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\xa0\x01\n" +
+	"!ListEphemeralRunSummariesResponse\x126\n" +
+	"\x04runs\x18\x01 \x03(\v2\".flowrensic.v1.EphemeralRunSummaryR\x04runs\x12/\n" +
+	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\x12\x12\n" +
+	"\x04envs\x18\x03 \x03(\tR\x04envs\"R\n" +
+	"\x19DeleteEphemeralRunRequest\x12\x10\n" +
+	"\x03env\x18\x01 \x01(\tR\x03env\x12#\n" +
+	"\rephemeral_run\x18\x02 \x01(\tR\fephemeralRun\"0\n" +
+	"\x1aDeleteEphemeralRunResponse\x12\x12\n" +
+	"\x04rows\x18\x01 \x01(\x03R\x04rows\"O\n" +
+	"\x1dGetEphemeralRunSummaryRequest\x12.\n" +
+	"\x04page\x18\x01 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\xd8\x01\n" +
+	"\x1eGetEphemeralRunSummaryResponse\x124\n" +
+	"\x03run\x18\x01 \x01(\v2\".flowrensic.v1.EphemeralRunSummaryR\x03run\x12\x18\n" +
+	"\aoutcome\x18\x02 \x01(\tR\aoutcome\x125\n" +
+	"\aresults\x18\x03 \x03(\v2\x1b.flowrensic.v1.ReplayResultR\aresults\x12/\n" +
+	"\x04page\x18\x04 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04pageB\xd1\x01\n" +
+	"\x11com.flowrensic.v1B\x11EphemeralRunProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_ephemeral_run_proto_rawDescOnce sync.Once
@@ -1669,7 +2202,7 @@ func file_flowrensic_v1_ephemeral_run_proto_rawDescGZIP() []byte {
 	return file_flowrensic_v1_ephemeral_run_proto_rawDescData
 }
 
-var file_flowrensic_v1_ephemeral_run_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_flowrensic_v1_ephemeral_run_proto_msgTypes = make([]protoimpl.MessageInfo, 33)
 var file_flowrensic_v1_ephemeral_run_proto_goTypes = []any{
 	(*EphemeralRun)(nil),                      // 0: flowrensic.v1.EphemeralRun
 	(*EphemeralRunMetric)(nil),                // 1: flowrensic.v1.EphemeralRunMetric
@@ -1695,38 +2228,55 @@ var file_flowrensic_v1_ephemeral_run_proto_goTypes = []any{
 	(*ListEphemeralRunsResponse)(nil),         // 21: flowrensic.v1.ListEphemeralRunsResponse
 	(*EphemeralRunMetricsRequest)(nil),        // 22: flowrensic.v1.EphemeralRunMetricsRequest
 	(*EphemeralRunMetricsResponse)(nil),       // 23: flowrensic.v1.EphemeralRunMetricsResponse
-	nil,                                       // 24: flowrensic.v1.EphemeralRunMetric.LabelsEntry
-	nil,                                       // 25: flowrensic.v1.WorkerMetric.LabelsEntry
-	(*timestamppb.Timestamp)(nil),             // 26: google.protobuf.Timestamp
-	(*PageRequest)(nil),                       // 27: flowrensic.v1.PageRequest
-	(*PageResponse)(nil),                      // 28: flowrensic.v1.PageResponse
-	(*WorkflowInterceptors)(nil),              // 29: flowrensic.v1.WorkflowInterceptors
+	(*EphemeralRunSummary)(nil),               // 24: flowrensic.v1.EphemeralRunSummary
+	(*ListEphemeralRunSummariesRequest)(nil),  // 25: flowrensic.v1.ListEphemeralRunSummariesRequest
+	(*ListEphemeralRunSummariesResponse)(nil), // 26: flowrensic.v1.ListEphemeralRunSummariesResponse
+	(*DeleteEphemeralRunRequest)(nil),         // 27: flowrensic.v1.DeleteEphemeralRunRequest
+	(*DeleteEphemeralRunResponse)(nil),        // 28: flowrensic.v1.DeleteEphemeralRunResponse
+	(*GetEphemeralRunSummaryRequest)(nil),     // 29: flowrensic.v1.GetEphemeralRunSummaryRequest
+	(*GetEphemeralRunSummaryResponse)(nil),    // 30: flowrensic.v1.GetEphemeralRunSummaryResponse
+	nil,                                       // 31: flowrensic.v1.EphemeralRunMetric.LabelsEntry
+	nil,                                       // 32: flowrensic.v1.WorkerMetric.LabelsEntry
+	(*timestamppb.Timestamp)(nil),             // 33: google.protobuf.Timestamp
+	(*PageRequest)(nil),                       // 34: flowrensic.v1.PageRequest
+	(*PageResponse)(nil),                      // 35: flowrensic.v1.PageResponse
+	(*WorkflowInterceptors)(nil),              // 36: flowrensic.v1.WorkflowInterceptors
+	(*ReplayResult)(nil),                      // 37: flowrensic.v1.ReplayResult
 }
 var file_flowrensic_v1_ephemeral_run_proto_depIdxs = []int32{
-	24, // 0: flowrensic.v1.EphemeralRunMetric.labels:type_name -> flowrensic.v1.EphemeralRunMetric.LabelsEntry
-	26, // 1: flowrensic.v1.EphemeralRunMetric.scraped_at:type_name -> google.protobuf.Timestamp
-	25, // 2: flowrensic.v1.WorkerMetric.labels:type_name -> flowrensic.v1.WorkerMetric.LabelsEntry
-	26, // 3: flowrensic.v1.WorkerMetric.scraped_at:type_name -> google.protobuf.Timestamp
-	27, // 4: flowrensic.v1.WorkerMetricsRequest.page:type_name -> flowrensic.v1.PageRequest
+	31, // 0: flowrensic.v1.EphemeralRunMetric.labels:type_name -> flowrensic.v1.EphemeralRunMetric.LabelsEntry
+	33, // 1: flowrensic.v1.EphemeralRunMetric.scraped_at:type_name -> google.protobuf.Timestamp
+	32, // 2: flowrensic.v1.WorkerMetric.labels:type_name -> flowrensic.v1.WorkerMetric.LabelsEntry
+	33, // 3: flowrensic.v1.WorkerMetric.scraped_at:type_name -> google.protobuf.Timestamp
+	34, // 4: flowrensic.v1.WorkerMetricsRequest.page:type_name -> flowrensic.v1.PageRequest
 	2,  // 5: flowrensic.v1.WorkerMetricsResponse.metrics:type_name -> flowrensic.v1.WorkerMetric
-	28, // 6: flowrensic.v1.WorkerMetricsResponse.page:type_name -> flowrensic.v1.PageResponse
-	29, // 7: flowrensic.v1.EphemeralRunHandshakeRequest.workflow_interceptors:type_name -> flowrensic.v1.WorkflowInterceptors
-	29, // 8: flowrensic.v1.WorkerBeatRequest.workflow_interceptors:type_name -> flowrensic.v1.WorkflowInterceptors
-	27, // 9: flowrensic.v1.OldWorkersRequest.page:type_name -> flowrensic.v1.PageRequest
-	26, // 10: flowrensic.v1.OldWorker.last_seen:type_name -> google.protobuf.Timestamp
+	35, // 6: flowrensic.v1.WorkerMetricsResponse.page:type_name -> flowrensic.v1.PageResponse
+	36, // 7: flowrensic.v1.EphemeralRunHandshakeRequest.workflow_interceptors:type_name -> flowrensic.v1.WorkflowInterceptors
+	36, // 8: flowrensic.v1.WorkerBeatRequest.workflow_interceptors:type_name -> flowrensic.v1.WorkflowInterceptors
+	34, // 9: flowrensic.v1.OldWorkersRequest.page:type_name -> flowrensic.v1.PageRequest
+	33, // 10: flowrensic.v1.OldWorker.last_seen:type_name -> google.protobuf.Timestamp
 	18, // 11: flowrensic.v1.OldWorkersResponse.workers:type_name -> flowrensic.v1.OldWorker
-	28, // 12: flowrensic.v1.OldWorkersResponse.page:type_name -> flowrensic.v1.PageResponse
-	27, // 13: flowrensic.v1.ListEphemeralRunsRequest.page:type_name -> flowrensic.v1.PageRequest
+	35, // 12: flowrensic.v1.OldWorkersResponse.page:type_name -> flowrensic.v1.PageResponse
+	34, // 13: flowrensic.v1.ListEphemeralRunsRequest.page:type_name -> flowrensic.v1.PageRequest
 	0,  // 14: flowrensic.v1.ListEphemeralRunsResponse.ephemeral_runs:type_name -> flowrensic.v1.EphemeralRun
-	28, // 15: flowrensic.v1.ListEphemeralRunsResponse.page:type_name -> flowrensic.v1.PageResponse
-	27, // 16: flowrensic.v1.EphemeralRunMetricsRequest.page:type_name -> flowrensic.v1.PageRequest
+	35, // 15: flowrensic.v1.ListEphemeralRunsResponse.page:type_name -> flowrensic.v1.PageResponse
+	34, // 16: flowrensic.v1.EphemeralRunMetricsRequest.page:type_name -> flowrensic.v1.PageRequest
 	1,  // 17: flowrensic.v1.EphemeralRunMetricsResponse.metrics:type_name -> flowrensic.v1.EphemeralRunMetric
-	28, // 18: flowrensic.v1.EphemeralRunMetricsResponse.page:type_name -> flowrensic.v1.PageResponse
-	19, // [19:19] is the sub-list for method output_type
-	19, // [19:19] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	35, // 18: flowrensic.v1.EphemeralRunMetricsResponse.page:type_name -> flowrensic.v1.PageResponse
+	33, // 19: flowrensic.v1.EphemeralRunSummary.started_at:type_name -> google.protobuf.Timestamp
+	33, // 20: flowrensic.v1.EphemeralRunSummary.ended_at:type_name -> google.protobuf.Timestamp
+	34, // 21: flowrensic.v1.ListEphemeralRunSummariesRequest.page:type_name -> flowrensic.v1.PageRequest
+	24, // 22: flowrensic.v1.ListEphemeralRunSummariesResponse.runs:type_name -> flowrensic.v1.EphemeralRunSummary
+	35, // 23: flowrensic.v1.ListEphemeralRunSummariesResponse.page:type_name -> flowrensic.v1.PageResponse
+	34, // 24: flowrensic.v1.GetEphemeralRunSummaryRequest.page:type_name -> flowrensic.v1.PageRequest
+	24, // 25: flowrensic.v1.GetEphemeralRunSummaryResponse.run:type_name -> flowrensic.v1.EphemeralRunSummary
+	37, // 26: flowrensic.v1.GetEphemeralRunSummaryResponse.results:type_name -> flowrensic.v1.ReplayResult
+	35, // 27: flowrensic.v1.GetEphemeralRunSummaryResponse.page:type_name -> flowrensic.v1.PageResponse
+	28, // [28:28] is the sub-list for method output_type
+	28, // [28:28] is the sub-list for method input_type
+	28, // [28:28] is the sub-list for extension type_name
+	28, // [28:28] is the sub-list for extension extendee
+	0,  // [0:28] is the sub-list for field type_name
 }
 
 func init() { file_flowrensic_v1_ephemeral_run_proto_init() }
@@ -1742,7 +2292,7 @@ func file_flowrensic_v1_ephemeral_run_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_flowrensic_v1_ephemeral_run_proto_rawDesc), len(file_flowrensic_v1_ephemeral_run_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   26,
+			NumMessages:   33,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

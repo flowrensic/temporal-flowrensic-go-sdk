@@ -300,7 +300,20 @@ type RemediationPlanResponse struct {
 	// runs does not fix its class.
 	OffReason string `protobuf:"bytes,5,opt,name=off_reason,json=offReason,proto3" json:"off_reason,omitempty"`
 	// Whether the list goes on after this page, and how to ask for the next.
-	Page          *PageResponse `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	Page *PageResponse `protobuf:"bytes,6,opt,name=page,proto3" json:"page,omitempty"`
+	// The envs of the runs of this page, each once, in the order of the runs,
+	// as the env list writes them. A finding with no run Flowrensic still
+	// holds gives the envs of the finding itself.
+	Envs []string `protobuf:"bytes,7,rep,name=envs,proto3" json:"envs,omitempty"`
+	// The ephemeral runs that sent the histories of the runs of this page, each
+	// once, in the order of the runs. A finding with no run gives the ephemeral
+	// run its details name.
+	EphemeralRuns []*FindingEphemeralRun `protobuf:"bytes,8,rep,name=ephemeral_runs,json=ephemeralRuns,proto3" json:"ephemeral_runs,omitempty"`
+	// The worker of each run of this page, each once, in the order of the runs:
+	// the worker name that sent its history, or the worker id when it has no
+	// name, or else the identity on the last workflow task event of its stored
+	// history. A finding with no run gives the worker id its details name.
+	Workers       []string `protobuf:"bytes,9,rep,name=workers,proto3" json:"workers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -377,6 +390,80 @@ func (x *RemediationPlanResponse) GetPage() *PageResponse {
 	return nil
 }
 
+func (x *RemediationPlanResponse) GetEnvs() []string {
+	if x != nil {
+		return x.Envs
+	}
+	return nil
+}
+
+func (x *RemediationPlanResponse) GetEphemeralRuns() []*FindingEphemeralRun {
+	if x != nil {
+		return x.EphemeralRuns
+	}
+	return nil
+}
+
+func (x *RemediationPlanResponse) GetWorkers() []string {
+	if x != nil {
+		return x.Workers
+	}
+	return nil
+}
+
+// One ephemeral run, by its env as the env list writes it and its id.
+type FindingEphemeralRun struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Env           string                 `protobuf:"bytes,1,opt,name=env,proto3" json:"env,omitempty"`
+	EphemeralRun  string                 `protobuf:"bytes,2,opt,name=ephemeral_run,json=ephemeralRun,proto3" json:"ephemeral_run,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FindingEphemeralRun) Reset() {
+	*x = FindingEphemeralRun{}
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FindingEphemeralRun) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FindingEphemeralRun) ProtoMessage() {}
+
+func (x *FindingEphemeralRun) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FindingEphemeralRun.ProtoReflect.Descriptor instead.
+func (*FindingEphemeralRun) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *FindingEphemeralRun) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
+func (x *FindingEphemeralRun) GetEphemeralRun() string {
+	if x != nil {
+		return x.EphemeralRun
+	}
+	return ""
+}
+
 // RemediatedRun is what happened to one run.
 type RemediatedRun struct {
 	state      protoimpl.MessageState `protogen:"open.v1"`
@@ -393,7 +480,7 @@ type RemediatedRun struct {
 
 func (x *RemediatedRun) Reset() {
 	*x = RemediatedRun{}
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[4]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -405,7 +492,7 @@ func (x *RemediatedRun) String() string {
 func (*RemediatedRun) ProtoMessage() {}
 
 func (x *RemediatedRun) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[4]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -418,7 +505,7 @@ func (x *RemediatedRun) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemediatedRun.ProtoReflect.Descriptor instead.
 func (*RemediatedRun) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{4}
+	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RemediatedRun) GetWorkflowId() string {
@@ -474,7 +561,7 @@ type Remediation struct {
 
 func (x *Remediation) Reset() {
 	*x = Remediation{}
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[5]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -486,7 +573,7 @@ func (x *Remediation) String() string {
 func (*Remediation) ProtoMessage() {}
 
 func (x *Remediation) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[5]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -499,7 +586,7 @@ func (x *Remediation) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Remediation.ProtoReflect.Descriptor instead.
 func (*Remediation) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{5}
+	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *Remediation) GetId() string {
@@ -571,7 +658,7 @@ type RemediateRequest struct {
 
 func (x *RemediateRequest) Reset() {
 	*x = RemediateRequest{}
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[6]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -583,7 +670,7 @@ func (x *RemediateRequest) String() string {
 func (*RemediateRequest) ProtoMessage() {}
 
 func (x *RemediateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[6]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -596,7 +683,7 @@ func (x *RemediateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemediateRequest.ProtoReflect.Descriptor instead.
 func (*RemediateRequest) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{6}
+	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RemediateRequest) GetFindingId() string {
@@ -643,7 +730,7 @@ type RemediateResponse struct {
 
 func (x *RemediateResponse) Reset() {
 	*x = RemediateResponse{}
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[7]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -655,7 +742,7 @@ func (x *RemediateResponse) String() string {
 func (*RemediateResponse) ProtoMessage() {}
 
 func (x *RemediateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[7]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -668,7 +755,7 @@ func (x *RemediateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemediateResponse.ProtoReflect.Descriptor instead.
 func (*RemediateResponse) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{7}
+	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *RemediateResponse) GetRemediation() *Remediation {
@@ -689,7 +776,7 @@ type ListRemediationsRequest struct {
 
 func (x *ListRemediationsRequest) Reset() {
 	*x = ListRemediationsRequest{}
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[8]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -701,7 +788,7 @@ func (x *ListRemediationsRequest) String() string {
 func (*ListRemediationsRequest) ProtoMessage() {}
 
 func (x *ListRemediationsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[8]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -714,7 +801,7 @@ func (x *ListRemediationsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRemediationsRequest.ProtoReflect.Descriptor instead.
 func (*ListRemediationsRequest) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{8}
+	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *ListRemediationsRequest) GetFindingId() string {
@@ -743,7 +830,7 @@ type ListRemediationsResponse struct {
 
 func (x *ListRemediationsResponse) Reset() {
 	*x = ListRemediationsResponse{}
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[9]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -755,7 +842,7 @@ func (x *ListRemediationsResponse) String() string {
 func (*ListRemediationsResponse) ProtoMessage() {}
 
 func (x *ListRemediationsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_remediation_proto_msgTypes[9]
+	mi := &file_flowrensic_v1_remediation_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -768,7 +855,7 @@ func (x *ListRemediationsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRemediationsResponse.ProtoReflect.Descriptor instead.
 func (*ListRemediationsResponse) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{9}
+	return file_flowrensic_v1_remediation_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ListRemediationsResponse) GetRemediations() []*Remediation {
@@ -805,7 +892,7 @@ const file_flowrensic_v1_remediation_proto_rawDesc = "" +
 	"\x16RemediationPlanRequest\x12\x1d\n" +
 	"\n" +
 	"finding_id\x18\x01 \x01(\tR\tfindingId\x12.\n" +
-	"\x04page\x18\x02 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\xf4\x01\n" +
+	"\x04page\x18\x02 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\xed\x02\n" +
 	"\x17RemediationPlanResponse\x12:\n" +
 	"\achoices\x18\x01 \x03(\v2 .flowrensic.v1.RemediationChoiceR\achoices\x12\x17\n" +
 	"\acan_act\x18\x02 \x01(\bR\x06canAct\x12\x17\n" +
@@ -813,7 +900,13 @@ const file_flowrensic_v1_remediation_proto_rawDesc = "" +
 	"\tgone_runs\x18\x04 \x01(\x05R\bgoneRuns\x12\x1d\n" +
 	"\n" +
 	"off_reason\x18\x05 \x01(\tR\toffReason\x12/\n" +
-	"\x04page\x18\x06 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\"\x8b\x01\n" +
+	"\x04page\x18\x06 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\x12\x12\n" +
+	"\x04envs\x18\a \x03(\tR\x04envs\x12I\n" +
+	"\x0eephemeral_runs\x18\b \x03(\v2\".flowrensic.v1.FindingEphemeralRunR\rephemeralRuns\x12\x18\n" +
+	"\aworkers\x18\t \x03(\tR\aworkers\"L\n" +
+	"\x13FindingEphemeralRun\x12\x10\n" +
+	"\x03env\x18\x01 \x01(\tR\x03env\x12#\n" +
+	"\rephemeral_run\x18\x02 \x01(\tR\fephemeralRun\"\x8b\x01\n" +
 	"\rRemediatedRun\x12\x1f\n" +
 	"\vworkflow_id\x18\x01 \x01(\tR\n" +
 	"workflowId\x12\x15\n" +
@@ -852,8 +945,8 @@ const file_flowrensic_v1_remediation_proto_rawDesc = "" +
 	"\x1eREMEDIATION_OPTION_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cREMEDIATION_OPTION_TERMINATE\x10\x01\x12\x1d\n" +
 	"\x19REMEDIATION_OPTION_CANCEL\x10\x02\x12\x1c\n" +
-	"\x18REMEDIATION_OPTION_RESET\x10\x03B\xb9\x01\n" +
-	"\x11com.flowrensic.v1B\x10RemediationProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x18REMEDIATION_OPTION_RESET\x10\x03B\xd0\x01\n" +
+	"\x11com.flowrensic.v1B\x10RemediationProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_remediation_proto_rawDescOnce sync.Once
@@ -868,42 +961,44 @@ func file_flowrensic_v1_remediation_proto_rawDescGZIP() []byte {
 }
 
 var file_flowrensic_v1_remediation_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_flowrensic_v1_remediation_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_flowrensic_v1_remediation_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_flowrensic_v1_remediation_proto_goTypes = []any{
 	(RemediationOption)(0),           // 0: flowrensic.v1.RemediationOption
 	(*RemediationRun)(nil),           // 1: flowrensic.v1.RemediationRun
 	(*RemediationChoice)(nil),        // 2: flowrensic.v1.RemediationChoice
 	(*RemediationPlanRequest)(nil),   // 3: flowrensic.v1.RemediationPlanRequest
 	(*RemediationPlanResponse)(nil),  // 4: flowrensic.v1.RemediationPlanResponse
-	(*RemediatedRun)(nil),            // 5: flowrensic.v1.RemediatedRun
-	(*Remediation)(nil),              // 6: flowrensic.v1.Remediation
-	(*RemediateRequest)(nil),         // 7: flowrensic.v1.RemediateRequest
-	(*RemediateResponse)(nil),        // 8: flowrensic.v1.RemediateResponse
-	(*ListRemediationsRequest)(nil),  // 9: flowrensic.v1.ListRemediationsRequest
-	(*ListRemediationsResponse)(nil), // 10: flowrensic.v1.ListRemediationsResponse
-	(*PageRequest)(nil),              // 11: flowrensic.v1.PageRequest
-	(*PageResponse)(nil),             // 12: flowrensic.v1.PageResponse
-	(*timestamppb.Timestamp)(nil),    // 13: google.protobuf.Timestamp
+	(*FindingEphemeralRun)(nil),      // 5: flowrensic.v1.FindingEphemeralRun
+	(*RemediatedRun)(nil),            // 6: flowrensic.v1.RemediatedRun
+	(*Remediation)(nil),              // 7: flowrensic.v1.Remediation
+	(*RemediateRequest)(nil),         // 8: flowrensic.v1.RemediateRequest
+	(*RemediateResponse)(nil),        // 9: flowrensic.v1.RemediateResponse
+	(*ListRemediationsRequest)(nil),  // 10: flowrensic.v1.ListRemediationsRequest
+	(*ListRemediationsResponse)(nil), // 11: flowrensic.v1.ListRemediationsResponse
+	(*PageRequest)(nil),              // 12: flowrensic.v1.PageRequest
+	(*PageResponse)(nil),             // 13: flowrensic.v1.PageResponse
+	(*timestamppb.Timestamp)(nil),    // 14: google.protobuf.Timestamp
 }
 var file_flowrensic_v1_remediation_proto_depIdxs = []int32{
 	0,  // 0: flowrensic.v1.RemediationChoice.option:type_name -> flowrensic.v1.RemediationOption
 	1,  // 1: flowrensic.v1.RemediationChoice.runs:type_name -> flowrensic.v1.RemediationRun
-	11, // 2: flowrensic.v1.RemediationPlanRequest.page:type_name -> flowrensic.v1.PageRequest
+	12, // 2: flowrensic.v1.RemediationPlanRequest.page:type_name -> flowrensic.v1.PageRequest
 	2,  // 3: flowrensic.v1.RemediationPlanResponse.choices:type_name -> flowrensic.v1.RemediationChoice
-	12, // 4: flowrensic.v1.RemediationPlanResponse.page:type_name -> flowrensic.v1.PageResponse
-	0,  // 5: flowrensic.v1.Remediation.option:type_name -> flowrensic.v1.RemediationOption
-	13, // 6: flowrensic.v1.Remediation.at:type_name -> google.protobuf.Timestamp
-	5,  // 7: flowrensic.v1.Remediation.runs:type_name -> flowrensic.v1.RemediatedRun
-	0,  // 8: flowrensic.v1.RemediateRequest.option:type_name -> flowrensic.v1.RemediationOption
-	6,  // 9: flowrensic.v1.RemediateResponse.remediation:type_name -> flowrensic.v1.Remediation
-	11, // 10: flowrensic.v1.ListRemediationsRequest.page:type_name -> flowrensic.v1.PageRequest
-	6,  // 11: flowrensic.v1.ListRemediationsResponse.remediations:type_name -> flowrensic.v1.Remediation
-	12, // 12: flowrensic.v1.ListRemediationsResponse.page:type_name -> flowrensic.v1.PageResponse
-	13, // [13:13] is the sub-list for method output_type
-	13, // [13:13] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	13, // 4: flowrensic.v1.RemediationPlanResponse.page:type_name -> flowrensic.v1.PageResponse
+	5,  // 5: flowrensic.v1.RemediationPlanResponse.ephemeral_runs:type_name -> flowrensic.v1.FindingEphemeralRun
+	0,  // 6: flowrensic.v1.Remediation.option:type_name -> flowrensic.v1.RemediationOption
+	14, // 7: flowrensic.v1.Remediation.at:type_name -> google.protobuf.Timestamp
+	6,  // 8: flowrensic.v1.Remediation.runs:type_name -> flowrensic.v1.RemediatedRun
+	0,  // 9: flowrensic.v1.RemediateRequest.option:type_name -> flowrensic.v1.RemediationOption
+	7,  // 10: flowrensic.v1.RemediateResponse.remediation:type_name -> flowrensic.v1.Remediation
+	12, // 11: flowrensic.v1.ListRemediationsRequest.page:type_name -> flowrensic.v1.PageRequest
+	7,  // 12: flowrensic.v1.ListRemediationsResponse.remediations:type_name -> flowrensic.v1.Remediation
+	13, // 13: flowrensic.v1.ListRemediationsResponse.page:type_name -> flowrensic.v1.PageResponse
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_flowrensic_v1_remediation_proto_init() }
@@ -918,7 +1013,7 @@ func file_flowrensic_v1_remediation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_flowrensic_v1_remediation_proto_rawDesc), len(file_flowrensic_v1_remediation_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   10,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

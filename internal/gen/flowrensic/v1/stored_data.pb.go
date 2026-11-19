@@ -81,8 +81,9 @@ type StoredKind struct {
 	Newest *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=newest,proto3" json:"newest,omitempty"`
 	// When the server last stored an item of this kind, by its own clock.
 	LastArrival *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=last_arrival,json=lastArrival,proto3" json:"last_arrival,omitempty"`
-	// How often the server gets this kind, such as Pulled from Temporal every
-	// 30 seconds. Empty for a kind that comes in when it happens.
+	// How the envs of this table get this kind, such as Pulled from Temporal
+	// every 30 seconds, or Sent by the workers for an env the server does not
+	// read itself. Empty for a kind that comes in when it happens.
 	Schedule      string `protobuf:"bytes,6,opt,name=schedule,proto3" json:"schedule,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -297,8 +298,8 @@ const file_flowrensic_v1_stored_data_proto_rawDesc = "" +
 	"\x15GetStoredDataResponse\x12/\n" +
 	"\x05kinds\x18\x01 \x03(\v2\x19.flowrensic.v1.StoredKindR\x05kinds\x12,\n" +
 	"\x03now\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x03now\x12,\n" +
-	"\x04envs\x18\x03 \x03(\v2\x18.flowrensic.v1.StoredEnvR\x04envsB\xb8\x01\n" +
-	"\x11com.flowrensic.v1B\x0fStoredDataProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x04envs\x18\x03 \x03(\v2\x18.flowrensic.v1.StoredEnvR\x04envsB\xcf\x01\n" +
+	"\x11com.flowrensic.v1B\x0fStoredDataProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_stored_data_proto_rawDescOnce sync.Once

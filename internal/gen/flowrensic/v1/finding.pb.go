@@ -22,221 +22,298 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// FindingClass names the failure modes. Wedged is the one the product is built
-// on: the run reports RUNNING forever while workflow tasks retry.
+// FindingClass names the failure modes. The run_stuck ones are what the
+// product is built on: the run reports RUNNING forever while it is stuck.
 type FindingClass int32
 
 const (
-	FindingClass_FINDING_CLASS_UNSPECIFIED                     FindingClass = 0
-	FindingClass_FINDING_CLASS_WEDGED                          FindingClass = 1
-	FindingClass_FINDING_CLASS_DANGLING_HANDLER                FindingClass = 2
-	FindingClass_FINDING_CLASS_STUCK_LOOP                      FindingClass = 3
-	FindingClass_FINDING_CLASS_HISTORY_BLOAT                   FindingClass = 4
-	FindingClass_FINDING_CLASS_ORPHANED_ACTIVITY               FindingClass = 5
-	FindingClass_FINDING_CLASS_INITIALIZATION_RACE             FindingClass = 6
-	FindingClass_FINDING_CLASS_INVALID_STATE_COMBINATION       FindingClass = 7
-	FindingClass_FINDING_CLASS_TWO_STORE_DRIFT                 FindingClass = 8
-	FindingClass_FINDING_CLASS_TIMEOUT_MISCONFIGURATION        FindingClass = 9
-	FindingClass_FINDING_CLASS_OVERLAP_TOO_LONG                FindingClass = 10
-	FindingClass_FINDING_CLASS_DECLARED_NOT_DONE               FindingClass = 11
-	FindingClass_FINDING_CLASS_OLD_VERSION_DURING_ROLLOUT      FindingClass = 12
-	FindingClass_FINDING_CLASS_RETRY_MISCONFIGURATION          FindingClass = 13
-	FindingClass_FINDING_CLASS_REFUSED_UPDATES                 FindingClass = 14
-	FindingClass_FINDING_CLASS_PULL_GAP                        FindingClass = 15
-	FindingClass_FINDING_CLASS_STOPPED_AFTER_DEPLOY            FindingClass = 16
-	FindingClass_FINDING_CLASS_FAILED_RUN                      FindingClass = 18
-	FindingClass_FINDING_CLASS_SERVER_METRICS_GAP              FindingClass = 19
-	FindingClass_FINDING_CLASS_WORKER_SLOTS_USED_UP            FindingClass = 21
-	FindingClass_FINDING_CLASS_STICKY_CACHE_TOO_SMALL          FindingClass = 22
-	FindingClass_FINDING_CLASS_SLOW_WORKFLOW_TASK              FindingClass = 23
-	FindingClass_FINDING_CLASS_LONG_REPLAY                     FindingClass = 24
-	FindingClass_FINDING_CLASS_ACTIVITY_FAILING                FindingClass = 25
-	FindingClass_FINDING_CLASS_ACTIVITY_SLOW                   FindingClass = 26
-	FindingClass_FINDING_CLASS_WORKER_POLLERS                  FindingClass = 27
-	FindingClass_FINDING_CLASS_WORKER_CANNOT_REACH_SERVER      FindingClass = 28
-	FindingClass_FINDING_CLASS_SCHEDULE_TO_START_INCREASE      FindingClass = 29
-	FindingClass_FINDING_CLASS_BACKLOG_GROWING                 FindingClass = 30
-	FindingClass_FINDING_CLASS_NO_POLLERS                      FindingClass = 31
-	FindingClass_FINDING_CLASS_HIGH_SCHEDULE_TO_START          FindingClass = 32
-	FindingClass_FINDING_CLASS_LOW_SYNC_MATCH                  FindingClass = 33
-	FindingClass_FINDING_CLASS_RESOURCE_EXHAUSTED              FindingClass = 34
-	FindingClass_FINDING_CLASS_TEMPORAL_DATABASE               FindingClass = 35
-	FindingClass_FINDING_CLASS_WORKFLOW_TASK_FAILURES          FindingClass = 36
-	FindingClass_FINDING_CLASS_ACTIVITY_TIMEOUTS_RISING        FindingClass = 37
-	FindingClass_FINDING_CLASS_HISTORY_TOO_LARGE               FindingClass = 38
-	FindingClass_FINDING_CLASS_HISTORY_SERVICE_TROUBLE         FindingClass = 39
-	FindingClass_FINDING_CLASS_ACTIVITY_ATTEMPTS               FindingClass = 40
-	FindingClass_FINDING_CLASS_ERROR_RETRIES                   FindingClass = 41
-	FindingClass_FINDING_CLASS_LONG_ACTIVITY_WITHOUT_HEARTBEAT FindingClass = 42
-	FindingClass_FINDING_CLASS_LOST_ATTEMPTS                   FindingClass = 43
-	FindingClass_FINDING_CLASS_UNHANDLED_MESSAGES              FindingClass = 44
-	FindingClass_FINDING_CLASS_WORKER_RECORDS_DROPPED          FindingClass = 45
-	FindingClass_FINDING_CLASS_NAMESPACE_NEAR_LIMIT            FindingClass = 46
-	FindingClass_FINDING_CLASS_NAMESPACE_THROTTLED             FindingClass = 47
-	FindingClass_FINDING_CLASS_ENGINE_METRICS_MISSING          FindingClass = 48
-	FindingClass_FINDING_CLASS_DATA_STOPPED                    FindingClass = 49
-	FindingClass_FINDING_CLASS_ACTIVITY_NEAR_TIMEOUT           FindingClass = 50
-	FindingClass_FINDING_CLASS_ACTIVITY_TIMED_OUT              FindingClass = 51
+	FindingClass_FINDING_CLASS_UNSPECIFIED                           FindingClass = 0
+	FindingClass_FINDING_CLASS_RUN_STUCK_FAILING                     FindingClass = 1
+	FindingClass_FINDING_CLASS_HANDLER_RUNNING_AT_CLOSE              FindingClass = 2
+	FindingClass_FINDING_CLASS_RUN_STUCK_IN_LOOP                     FindingClass = 3
+	FindingClass_FINDING_CLASS_RUN_CLOSED_WITH_ACTIVITIES_OPEN       FindingClass = 5
+	FindingClass_FINDING_CLASS_HANDLER_RAN_BEFORE_SETUP              FindingClass = 6
+	FindingClass_FINDING_CLASS_RUN_STATE_IMPOSSIBLE                  FindingClass = 7
+	FindingClass_FINDING_CLASS_RUN_DISAGREES_WITH_STORE              FindingClass = 8
+	FindingClass_FINDING_CLASS_DEPLOY_OVERLAP_TOO_LONG               FindingClass = 10
+	FindingClass_FINDING_CLASS_DEPLOY_STAGE_MISSING                  FindingClass = 11
+	FindingClass_FINDING_CLASS_DEPLOY_RUN_ON_OLD_VERSION             FindingClass = 12
+	FindingClass_FINDING_CLASS_ACTIVITY_RETRY_LIMIT_TOO_HIGH         FindingClass = 13
+	FindingClass_FINDING_CLASS_RUN_REFUSING_UPDATES                  FindingClass = 14
+	FindingClass_FINDING_CLASS_NAMESPACE_NOT_PULLED                  FindingClass = 15
+	FindingClass_FINDING_CLASS_DEPLOY_FIXED_PROBLEM                  FindingClass = 16
+	FindingClass_FINDING_CLASS_RUN_CLOSED_AS_FAILED                  FindingClass = 18
+	FindingClass_FINDING_CLASS_ENGINE_METRICS_NEVER_SENT             FindingClass = 19
+	FindingClass_FINDING_CLASS_WORKER_SLOTS_USED_UP                  FindingClass = 21
+	FindingClass_FINDING_CLASS_WORKER_STICKY_CACHE_TOO_SMALL         FindingClass = 22
+	FindingClass_FINDING_CLASS_WORKER_WORKFLOW_TASKS_SLOW            FindingClass = 23
+	FindingClass_FINDING_CLASS_WORKER_REPLAY_SLOW                    FindingClass = 24
+	FindingClass_FINDING_CLASS_ACTIVITY_FAILING                      FindingClass = 25
+	FindingClass_FINDING_CLASS_WORKER_CANNOT_REACH_ENGINE            FindingClass = 28
+	FindingClass_FINDING_CLASS_TASK_QUEUE_WITHOUT_POLLERS            FindingClass = 31
+	FindingClass_FINDING_CLASS_TASK_QUEUE_FALLING_BEHIND             FindingClass = 32
+	FindingClass_FINDING_CLASS_TASK_QUEUE_TASKS_NOT_MATCHED_DIRECTLY FindingClass = 33
+	FindingClass_FINDING_CLASS_ACTIVITY_RETRIES_RISING               FindingClass = 40
+	FindingClass_FINDING_CLASS_ACTIVITY_RETRIES_NEVER_SUCCEED        FindingClass = 41
+	FindingClass_FINDING_CLASS_ACTIVITY_HEARTBEAT_TIMEOUT_MISSING    FindingClass = 42
+	FindingClass_FINDING_CLASS_RUN_MESSAGES_UNHANDLED                FindingClass = 44
+	FindingClass_FINDING_CLASS_WORKER_REPORTS_DROPPED                FindingClass = 45
+	FindingClass_FINDING_CLASS_NAMESPACE_NEAR_LIMIT                  FindingClass = 46
+	FindingClass_FINDING_CLASS_NAMESPACE_THROTTLED                   FindingClass = 47
+	FindingClass_FINDING_CLASS_ENGINE_METRICS_NOT_SET_UP             FindingClass = 48
+	FindingClass_FINDING_CLASS_ACTIVITY_NEAR_TIMEOUT                 FindingClass = 50
 	// The setup problems of FPP-124-R05.
-	FindingClass_FINDING_CLASS_ENGINE_REFUSED        FindingClass = 52
-	FindingClass_FINDING_CLASS_ENGINE_UNREACHABLE    FindingClass = 53
-	FindingClass_FINDING_CLASS_WORKER_CALLS_REFUSED  FindingClass = 54
-	FindingClass_FINDING_CLASS_NAMESPACE_NOT_FOUND   FindingClass = 55
-	FindingClass_FINDING_CLASS_ENV_WITHOUT_NAMESPACE FindingClass = 56
+	FindingClass_FINDING_CLASS_ENGINE_REFUSES_FLOWRENSIC FindingClass = 52
+	FindingClass_FINDING_CLASS_ENGINE_UNREACHABLE        FindingClass = 53
+	FindingClass_FINDING_CLASS_WORKER_REPORTS_REFUSED    FindingClass = 54
+	FindingClass_FINDING_CLASS_NAMESPACE_NOT_FOUND       FindingClass = 55
+	FindingClass_FINDING_CLASS_ENV_WITHOUT_NAMESPACE     FindingClass = 56
 	// The e2e test findings of FPP-105-R10 and FPP-105-R11.
-	FindingClass_FINDING_CLASS_E2E_WITH_OLD_WORKERS FindingClass = 58
-	FindingClass_FINDING_CLASS_E2E_ATTEMPTS_LOST    FindingClass = 59
+	FindingClass_FINDING_CLASS_DEPLOY_E2E_MET_OLD_WORKERS FindingClass = 58
+	FindingClass_FINDING_CLASS_DEPLOY_E2E_LOST_ATTEMPTS   FindingClass = 59
 	// An open run that nothing inside can wake, quiet past its threshold,
 	// FPP-132.
-	FindingClass_FINDING_CLASS_FORGOTTEN FindingClass = 60
+	FindingClass_FINDING_CLASS_RUN_STUCK_FORGOTTEN FindingClass = 60
 	// A replay that ran with other workflow interceptors than the workers of
 	// its env, and a version that changed them while runs were open, FPP-131.
-	FindingClass_FINDING_CLASS_REPLAY_INTERCEPTOR_DRIFT FindingClass = 61
-	FindingClass_FINDING_CLASS_INTERCEPTORS_CHANGED     FindingClass = 62
+	FindingClass_FINDING_CLASS_REPLAY_INTERCEPTORS_DIFFER          FindingClass = 61
+	FindingClass_FINDING_CLASS_INTERCEPTORS_CHANGED_WITH_RUNS_OPEN FindingClass = 62
 	// A locked job of Flowrensic whose passes did not catch up for a whole
 	// window, and one with no pass that ended for too long, FPP-135.
-	FindingClass_FINDING_CLASS_JOB_BEHIND FindingClass = 63
-	FindingClass_FINDING_CLASS_JOB_LATE   FindingClass = 64
-	// A signal of a Flowrensic server that stayed over its limit for a while,
-	// FPP-135-R13.
-	FindingClass_FINDING_CLASS_OVER_LIMIT FindingClass = 66
+	FindingClass_FINDING_CLASS_FLOWRENSIC_JOB_BEHIND  FindingClass = 63
+	FindingClass_FINDING_CLASS_FLOWRENSIC_JOB_STOPPED FindingClass = 64
 	// The work waiting of a Flowrensic job that keeps growing, FPP-135-R19.
-	FindingClass_FINDING_CLASS_JOB_BACKLOG_GROWING FindingClass = 67
+	FindingClass_FINDING_CLASS_FLOWRENSIC_JOB_BACKLOG_GROWING FindingClass = 67
+	// A stored history Flowrensic cannot read, so its events are left out of
+	// the billable counts and the cost, FPP-077-R04.
+	FindingClass_FINDING_CLASS_STORED_HISTORY_UNREADABLE FindingClass = 68
+	// Workers of one env on more than one SDK version of one language for over an hour.
+	FindingClass_FINDING_CLASS_WORKER_SDK_VERSIONS_MIXED FindingClass = 69
+	// Flowrensic refuses the calls of a worker whose body passes the request limit, FPP-124-R05.
+	FindingClass_FINDING_CLASS_WORKER_REPORTS_TOO_LARGE FindingClass = 70
+	// A run history with too many events, one that takes too much storage, and
+	// one payload close to the size limit, FPP-014-R03 to R06.
+	FindingClass_FINDING_CLASS_HISTORY_TOO_LONG             FindingClass = 71
+	FindingClass_FINDING_CLASS_HISTORY_STORAGE_TOO_LARGE    FindingClass = 72
+	FindingClass_FINDING_CLASS_INDIVIDUAL_PAYLOAD_TOO_LARGE FindingClass = 73
+	FindingClass_FINDING_CLASS_RUN_STUCK_WAITING            FindingClass = 74
+	// A worker whose polls mostly come back empty, FPP-184-R03.
+	FindingClass_FINDING_CLASS_WORKER_POLLERS_TOO_MANY FindingClass = 76
+	// Tasks that wait while the worker has free slots, FPP-184-R04.
+	FindingClass_FINDING_CLASS_WORKER_POLLERS_TOO_FEW FindingClass = 77
+	// An activity whose start to close timeout is at or below its p99 run time, FPP-005-R03.
+	FindingClass_FINDING_CLASS_ACTIVITY_TIMEOUT_TOO_SHORT FindingClass = 78
+	// An activity whose start to close timeout is more than ten times its p99 run time, FPP-005-R04.
+	FindingClass_FINDING_CLASS_ACTIVITY_TIMEOUT_TOO_LONG FindingClass = 79
+	// An activity whose schedule to start timeout fired: no worker picked it up, FPP-175-R03.
+	FindingClass_FINDING_CLASS_ACTIVITY_TIMED_OUT_WAITING_FOR_WORKER FindingClass = 80
+	// An activity whose heartbeat timeout fired: the worker died, or the code does not heartbeat, FPP-175-R04.
+	FindingClass_FINDING_CLASS_ACTIVITY_TIMED_OUT_MISSING_HEARTBEAT FindingClass = 81
+	// An activity whose start to close or schedule to close timeout fired, FPP-175-R05.
+	FindingClass_FINDING_CLASS_ACTIVITY_TIMED_OUT_RUNNING_TOO_LONG FindingClass = 82
+	// The engine's shards keep moving between hosts, on a self-hosted server, FPP-195-R04.
+	FindingClass_FINDING_CLASS_ENGINE_SHARDS_MOVING FindingClass = 83
+	// The engine returns errors, FPP-195-R05.
+	FindingClass_FINDING_CLASS_ENGINE_RETURNING_ERRORS FindingClass = 84
+	// Calls to the engine are slow, FPP-195-R06.
+	FindingClass_FINDING_CLASS_ENGINE_CALLS_SLOW FindingClass = 85
+	// CPU used by Flowrensic servers stayed over its limit, FPP-217-R04.
+	FindingClass_FINDING_CLASS_FLOWRENSIC_SERVER_CPU_HIGH FindingClass = 86
+	// Memory used by Flowrensic servers stayed over its limit, FPP-217-R05.
+	FindingClass_FINDING_CLASS_FLOWRENSIC_SERVER_MEMORY_HIGH FindingClass = 87
+	// Pool wait, database connections or refused connections stayed over their limit, FPP-217-R06.
+	FindingClass_FINDING_CLASS_FLOWRENSIC_DB_POOL_EXHAUSTED FindingClass = 88
+	// Request time or requests running at once stayed over their limit, FPP-217-R07.
+	FindingClass_FINDING_CLASS_FLOWRENSIC_REQUESTS_LAG FindingClass = 89
+	// One workflow or task queue got more calls at once than it can take, FPP-193-R01.
+	FindingClass_FINDING_CLASS_NAMESPACE_RESOURCE_TOO_BUSY FindingClass = 90
+	// The engine's database calls fail, FPP-194-R03.
+	FindingClass_FINDING_CLASS_ENGINE_DATABASE_FAILING FindingClass = 91
+	// The engine's database calls answer slowly on average, FPP-194-R03.
+	FindingClass_FINDING_CLASS_ENGINE_DATABASE_SLOW FindingClass = 92
+	// The engine metrics of an env or an instance stopped arriving, FPP-124-R06.
+	FindingClass_FINDING_CLASS_DATA_STOPPED_ENGINE_METRICS FindingClass = 93
+	// Histories stopped arriving while activity events went on, FPP-124-R06.
+	FindingClass_FINDING_CLASS_DATA_STOPPED_HISTORIES FindingClass = 94
+	// Every worker of an env or an instance stopped sending worker metrics, FPP-124-R06.
+	FindingClass_FINDING_CLASS_DATA_STOPPED_WORKER_METRICS FindingClass = 95
+	// Activity events stopped arriving while histories went on, FPP-124-R06.
+	FindingClass_FINDING_CLASS_DATA_STOPPED_ACTIVITY_EVENTS FindingClass = 96
+	// One worker stopped sending while other workers of its env still send, FPP-124-R06.
+	FindingClass_FINDING_CLASS_WORKER_WENT_SILENT FindingClass = 97
+	// The pollers waiting at once in a namespace near its Temporal Cloud poller limit, FPP-196-R02.
+	FindingClass_FINDING_CLASS_NAMESPACE_NEAR_POLLER_LIMIT FindingClass = 98
+	// A workflow task whose start to close timeout fired: a worker took it and did not finish in time, FPP-172-R04.
+	FindingClass_FINDING_CLASS_WORKFLOW_TASK_TIMED_OUT_RUNNING_TOO_LONG FindingClass = 99
+	// A workflow task whose schedule to start timeout fired: its sticky worker did not take it, FPP-172-R04.
+	FindingClass_FINDING_CLASS_WORKFLOW_TASK_TIMED_OUT_WAITING_FOR_WORKER FindingClass = 100
 )
 
 // Enum value maps for FindingClass.
 var (
 	FindingClass_name = map[int32]string{
-		0:  "FINDING_CLASS_UNSPECIFIED",
-		1:  "FINDING_CLASS_WEDGED",
-		2:  "FINDING_CLASS_DANGLING_HANDLER",
-		3:  "FINDING_CLASS_STUCK_LOOP",
-		4:  "FINDING_CLASS_HISTORY_BLOAT",
-		5:  "FINDING_CLASS_ORPHANED_ACTIVITY",
-		6:  "FINDING_CLASS_INITIALIZATION_RACE",
-		7:  "FINDING_CLASS_INVALID_STATE_COMBINATION",
-		8:  "FINDING_CLASS_TWO_STORE_DRIFT",
-		9:  "FINDING_CLASS_TIMEOUT_MISCONFIGURATION",
-		10: "FINDING_CLASS_OVERLAP_TOO_LONG",
-		11: "FINDING_CLASS_DECLARED_NOT_DONE",
-		12: "FINDING_CLASS_OLD_VERSION_DURING_ROLLOUT",
-		13: "FINDING_CLASS_RETRY_MISCONFIGURATION",
-		14: "FINDING_CLASS_REFUSED_UPDATES",
-		15: "FINDING_CLASS_PULL_GAP",
-		16: "FINDING_CLASS_STOPPED_AFTER_DEPLOY",
-		18: "FINDING_CLASS_FAILED_RUN",
-		19: "FINDING_CLASS_SERVER_METRICS_GAP",
-		21: "FINDING_CLASS_WORKER_SLOTS_USED_UP",
-		22: "FINDING_CLASS_STICKY_CACHE_TOO_SMALL",
-		23: "FINDING_CLASS_SLOW_WORKFLOW_TASK",
-		24: "FINDING_CLASS_LONG_REPLAY",
-		25: "FINDING_CLASS_ACTIVITY_FAILING",
-		26: "FINDING_CLASS_ACTIVITY_SLOW",
-		27: "FINDING_CLASS_WORKER_POLLERS",
-		28: "FINDING_CLASS_WORKER_CANNOT_REACH_SERVER",
-		29: "FINDING_CLASS_SCHEDULE_TO_START_INCREASE",
-		30: "FINDING_CLASS_BACKLOG_GROWING",
-		31: "FINDING_CLASS_NO_POLLERS",
-		32: "FINDING_CLASS_HIGH_SCHEDULE_TO_START",
-		33: "FINDING_CLASS_LOW_SYNC_MATCH",
-		34: "FINDING_CLASS_RESOURCE_EXHAUSTED",
-		35: "FINDING_CLASS_TEMPORAL_DATABASE",
-		36: "FINDING_CLASS_WORKFLOW_TASK_FAILURES",
-		37: "FINDING_CLASS_ACTIVITY_TIMEOUTS_RISING",
-		38: "FINDING_CLASS_HISTORY_TOO_LARGE",
-		39: "FINDING_CLASS_HISTORY_SERVICE_TROUBLE",
-		40: "FINDING_CLASS_ACTIVITY_ATTEMPTS",
-		41: "FINDING_CLASS_ERROR_RETRIES",
-		42: "FINDING_CLASS_LONG_ACTIVITY_WITHOUT_HEARTBEAT",
-		43: "FINDING_CLASS_LOST_ATTEMPTS",
-		44: "FINDING_CLASS_UNHANDLED_MESSAGES",
-		45: "FINDING_CLASS_WORKER_RECORDS_DROPPED",
-		46: "FINDING_CLASS_NAMESPACE_NEAR_LIMIT",
-		47: "FINDING_CLASS_NAMESPACE_THROTTLED",
-		48: "FINDING_CLASS_ENGINE_METRICS_MISSING",
-		49: "FINDING_CLASS_DATA_STOPPED",
-		50: "FINDING_CLASS_ACTIVITY_NEAR_TIMEOUT",
-		51: "FINDING_CLASS_ACTIVITY_TIMED_OUT",
-		52: "FINDING_CLASS_ENGINE_REFUSED",
-		53: "FINDING_CLASS_ENGINE_UNREACHABLE",
-		54: "FINDING_CLASS_WORKER_CALLS_REFUSED",
-		55: "FINDING_CLASS_NAMESPACE_NOT_FOUND",
-		56: "FINDING_CLASS_ENV_WITHOUT_NAMESPACE",
-		58: "FINDING_CLASS_E2E_WITH_OLD_WORKERS",
-		59: "FINDING_CLASS_E2E_ATTEMPTS_LOST",
-		60: "FINDING_CLASS_FORGOTTEN",
-		61: "FINDING_CLASS_REPLAY_INTERCEPTOR_DRIFT",
-		62: "FINDING_CLASS_INTERCEPTORS_CHANGED",
-		63: "FINDING_CLASS_JOB_BEHIND",
-		64: "FINDING_CLASS_JOB_LATE",
-		66: "FINDING_CLASS_OVER_LIMIT",
-		67: "FINDING_CLASS_JOB_BACKLOG_GROWING",
+		0:   "FINDING_CLASS_UNSPECIFIED",
+		1:   "FINDING_CLASS_RUN_STUCK_FAILING",
+		2:   "FINDING_CLASS_HANDLER_RUNNING_AT_CLOSE",
+		3:   "FINDING_CLASS_RUN_STUCK_IN_LOOP",
+		5:   "FINDING_CLASS_RUN_CLOSED_WITH_ACTIVITIES_OPEN",
+		6:   "FINDING_CLASS_HANDLER_RAN_BEFORE_SETUP",
+		7:   "FINDING_CLASS_RUN_STATE_IMPOSSIBLE",
+		8:   "FINDING_CLASS_RUN_DISAGREES_WITH_STORE",
+		10:  "FINDING_CLASS_DEPLOY_OVERLAP_TOO_LONG",
+		11:  "FINDING_CLASS_DEPLOY_STAGE_MISSING",
+		12:  "FINDING_CLASS_DEPLOY_RUN_ON_OLD_VERSION",
+		13:  "FINDING_CLASS_ACTIVITY_RETRY_LIMIT_TOO_HIGH",
+		14:  "FINDING_CLASS_RUN_REFUSING_UPDATES",
+		15:  "FINDING_CLASS_NAMESPACE_NOT_PULLED",
+		16:  "FINDING_CLASS_DEPLOY_FIXED_PROBLEM",
+		18:  "FINDING_CLASS_RUN_CLOSED_AS_FAILED",
+		19:  "FINDING_CLASS_ENGINE_METRICS_NEVER_SENT",
+		21:  "FINDING_CLASS_WORKER_SLOTS_USED_UP",
+		22:  "FINDING_CLASS_WORKER_STICKY_CACHE_TOO_SMALL",
+		23:  "FINDING_CLASS_WORKER_WORKFLOW_TASKS_SLOW",
+		24:  "FINDING_CLASS_WORKER_REPLAY_SLOW",
+		25:  "FINDING_CLASS_ACTIVITY_FAILING",
+		28:  "FINDING_CLASS_WORKER_CANNOT_REACH_ENGINE",
+		31:  "FINDING_CLASS_TASK_QUEUE_WITHOUT_POLLERS",
+		32:  "FINDING_CLASS_TASK_QUEUE_FALLING_BEHIND",
+		33:  "FINDING_CLASS_TASK_QUEUE_TASKS_NOT_MATCHED_DIRECTLY",
+		40:  "FINDING_CLASS_ACTIVITY_RETRIES_RISING",
+		41:  "FINDING_CLASS_ACTIVITY_RETRIES_NEVER_SUCCEED",
+		42:  "FINDING_CLASS_ACTIVITY_HEARTBEAT_TIMEOUT_MISSING",
+		44:  "FINDING_CLASS_RUN_MESSAGES_UNHANDLED",
+		45:  "FINDING_CLASS_WORKER_REPORTS_DROPPED",
+		46:  "FINDING_CLASS_NAMESPACE_NEAR_LIMIT",
+		47:  "FINDING_CLASS_NAMESPACE_THROTTLED",
+		48:  "FINDING_CLASS_ENGINE_METRICS_NOT_SET_UP",
+		50:  "FINDING_CLASS_ACTIVITY_NEAR_TIMEOUT",
+		52:  "FINDING_CLASS_ENGINE_REFUSES_FLOWRENSIC",
+		53:  "FINDING_CLASS_ENGINE_UNREACHABLE",
+		54:  "FINDING_CLASS_WORKER_REPORTS_REFUSED",
+		55:  "FINDING_CLASS_NAMESPACE_NOT_FOUND",
+		56:  "FINDING_CLASS_ENV_WITHOUT_NAMESPACE",
+		58:  "FINDING_CLASS_DEPLOY_E2E_MET_OLD_WORKERS",
+		59:  "FINDING_CLASS_DEPLOY_E2E_LOST_ATTEMPTS",
+		60:  "FINDING_CLASS_RUN_STUCK_FORGOTTEN",
+		61:  "FINDING_CLASS_REPLAY_INTERCEPTORS_DIFFER",
+		62:  "FINDING_CLASS_INTERCEPTORS_CHANGED_WITH_RUNS_OPEN",
+		63:  "FINDING_CLASS_FLOWRENSIC_JOB_BEHIND",
+		64:  "FINDING_CLASS_FLOWRENSIC_JOB_STOPPED",
+		67:  "FINDING_CLASS_FLOWRENSIC_JOB_BACKLOG_GROWING",
+		68:  "FINDING_CLASS_STORED_HISTORY_UNREADABLE",
+		69:  "FINDING_CLASS_WORKER_SDK_VERSIONS_MIXED",
+		70:  "FINDING_CLASS_WORKER_REPORTS_TOO_LARGE",
+		71:  "FINDING_CLASS_HISTORY_TOO_LONG",
+		72:  "FINDING_CLASS_HISTORY_STORAGE_TOO_LARGE",
+		73:  "FINDING_CLASS_INDIVIDUAL_PAYLOAD_TOO_LARGE",
+		74:  "FINDING_CLASS_RUN_STUCK_WAITING",
+		76:  "FINDING_CLASS_WORKER_POLLERS_TOO_MANY",
+		77:  "FINDING_CLASS_WORKER_POLLERS_TOO_FEW",
+		78:  "FINDING_CLASS_ACTIVITY_TIMEOUT_TOO_SHORT",
+		79:  "FINDING_CLASS_ACTIVITY_TIMEOUT_TOO_LONG",
+		80:  "FINDING_CLASS_ACTIVITY_TIMED_OUT_WAITING_FOR_WORKER",
+		81:  "FINDING_CLASS_ACTIVITY_TIMED_OUT_MISSING_HEARTBEAT",
+		82:  "FINDING_CLASS_ACTIVITY_TIMED_OUT_RUNNING_TOO_LONG",
+		83:  "FINDING_CLASS_ENGINE_SHARDS_MOVING",
+		84:  "FINDING_CLASS_ENGINE_RETURNING_ERRORS",
+		85:  "FINDING_CLASS_ENGINE_CALLS_SLOW",
+		86:  "FINDING_CLASS_FLOWRENSIC_SERVER_CPU_HIGH",
+		87:  "FINDING_CLASS_FLOWRENSIC_SERVER_MEMORY_HIGH",
+		88:  "FINDING_CLASS_FLOWRENSIC_DB_POOL_EXHAUSTED",
+		89:  "FINDING_CLASS_FLOWRENSIC_REQUESTS_LAG",
+		90:  "FINDING_CLASS_NAMESPACE_RESOURCE_TOO_BUSY",
+		91:  "FINDING_CLASS_ENGINE_DATABASE_FAILING",
+		92:  "FINDING_CLASS_ENGINE_DATABASE_SLOW",
+		93:  "FINDING_CLASS_DATA_STOPPED_ENGINE_METRICS",
+		94:  "FINDING_CLASS_DATA_STOPPED_HISTORIES",
+		95:  "FINDING_CLASS_DATA_STOPPED_WORKER_METRICS",
+		96:  "FINDING_CLASS_DATA_STOPPED_ACTIVITY_EVENTS",
+		97:  "FINDING_CLASS_WORKER_WENT_SILENT",
+		98:  "FINDING_CLASS_NAMESPACE_NEAR_POLLER_LIMIT",
+		99:  "FINDING_CLASS_WORKFLOW_TASK_TIMED_OUT_RUNNING_TOO_LONG",
+		100: "FINDING_CLASS_WORKFLOW_TASK_TIMED_OUT_WAITING_FOR_WORKER",
 	}
 	FindingClass_value = map[string]int32{
-		"FINDING_CLASS_UNSPECIFIED":                     0,
-		"FINDING_CLASS_WEDGED":                          1,
-		"FINDING_CLASS_DANGLING_HANDLER":                2,
-		"FINDING_CLASS_STUCK_LOOP":                      3,
-		"FINDING_CLASS_HISTORY_BLOAT":                   4,
-		"FINDING_CLASS_ORPHANED_ACTIVITY":               5,
-		"FINDING_CLASS_INITIALIZATION_RACE":             6,
-		"FINDING_CLASS_INVALID_STATE_COMBINATION":       7,
-		"FINDING_CLASS_TWO_STORE_DRIFT":                 8,
-		"FINDING_CLASS_TIMEOUT_MISCONFIGURATION":        9,
-		"FINDING_CLASS_OVERLAP_TOO_LONG":                10,
-		"FINDING_CLASS_DECLARED_NOT_DONE":               11,
-		"FINDING_CLASS_OLD_VERSION_DURING_ROLLOUT":      12,
-		"FINDING_CLASS_RETRY_MISCONFIGURATION":          13,
-		"FINDING_CLASS_REFUSED_UPDATES":                 14,
-		"FINDING_CLASS_PULL_GAP":                        15,
-		"FINDING_CLASS_STOPPED_AFTER_DEPLOY":            16,
-		"FINDING_CLASS_FAILED_RUN":                      18,
-		"FINDING_CLASS_SERVER_METRICS_GAP":              19,
-		"FINDING_CLASS_WORKER_SLOTS_USED_UP":            21,
-		"FINDING_CLASS_STICKY_CACHE_TOO_SMALL":          22,
-		"FINDING_CLASS_SLOW_WORKFLOW_TASK":              23,
-		"FINDING_CLASS_LONG_REPLAY":                     24,
-		"FINDING_CLASS_ACTIVITY_FAILING":                25,
-		"FINDING_CLASS_ACTIVITY_SLOW":                   26,
-		"FINDING_CLASS_WORKER_POLLERS":                  27,
-		"FINDING_CLASS_WORKER_CANNOT_REACH_SERVER":      28,
-		"FINDING_CLASS_SCHEDULE_TO_START_INCREASE":      29,
-		"FINDING_CLASS_BACKLOG_GROWING":                 30,
-		"FINDING_CLASS_NO_POLLERS":                      31,
-		"FINDING_CLASS_HIGH_SCHEDULE_TO_START":          32,
-		"FINDING_CLASS_LOW_SYNC_MATCH":                  33,
-		"FINDING_CLASS_RESOURCE_EXHAUSTED":              34,
-		"FINDING_CLASS_TEMPORAL_DATABASE":               35,
-		"FINDING_CLASS_WORKFLOW_TASK_FAILURES":          36,
-		"FINDING_CLASS_ACTIVITY_TIMEOUTS_RISING":        37,
-		"FINDING_CLASS_HISTORY_TOO_LARGE":               38,
-		"FINDING_CLASS_HISTORY_SERVICE_TROUBLE":         39,
-		"FINDING_CLASS_ACTIVITY_ATTEMPTS":               40,
-		"FINDING_CLASS_ERROR_RETRIES":                   41,
-		"FINDING_CLASS_LONG_ACTIVITY_WITHOUT_HEARTBEAT": 42,
-		"FINDING_CLASS_LOST_ATTEMPTS":                   43,
-		"FINDING_CLASS_UNHANDLED_MESSAGES":              44,
-		"FINDING_CLASS_WORKER_RECORDS_DROPPED":          45,
-		"FINDING_CLASS_NAMESPACE_NEAR_LIMIT":            46,
-		"FINDING_CLASS_NAMESPACE_THROTTLED":             47,
-		"FINDING_CLASS_ENGINE_METRICS_MISSING":          48,
-		"FINDING_CLASS_DATA_STOPPED":                    49,
-		"FINDING_CLASS_ACTIVITY_NEAR_TIMEOUT":           50,
-		"FINDING_CLASS_ACTIVITY_TIMED_OUT":              51,
-		"FINDING_CLASS_ENGINE_REFUSED":                  52,
-		"FINDING_CLASS_ENGINE_UNREACHABLE":              53,
-		"FINDING_CLASS_WORKER_CALLS_REFUSED":            54,
-		"FINDING_CLASS_NAMESPACE_NOT_FOUND":             55,
-		"FINDING_CLASS_ENV_WITHOUT_NAMESPACE":           56,
-		"FINDING_CLASS_E2E_WITH_OLD_WORKERS":            58,
-		"FINDING_CLASS_E2E_ATTEMPTS_LOST":               59,
-		"FINDING_CLASS_FORGOTTEN":                       60,
-		"FINDING_CLASS_REPLAY_INTERCEPTOR_DRIFT":        61,
-		"FINDING_CLASS_INTERCEPTORS_CHANGED":            62,
-		"FINDING_CLASS_JOB_BEHIND":                      63,
-		"FINDING_CLASS_JOB_LATE":                        64,
-		"FINDING_CLASS_OVER_LIMIT":                      66,
-		"FINDING_CLASS_JOB_BACKLOG_GROWING":             67,
+		"FINDING_CLASS_UNSPECIFIED":                                0,
+		"FINDING_CLASS_RUN_STUCK_FAILING":                          1,
+		"FINDING_CLASS_HANDLER_RUNNING_AT_CLOSE":                   2,
+		"FINDING_CLASS_RUN_STUCK_IN_LOOP":                          3,
+		"FINDING_CLASS_RUN_CLOSED_WITH_ACTIVITIES_OPEN":            5,
+		"FINDING_CLASS_HANDLER_RAN_BEFORE_SETUP":                   6,
+		"FINDING_CLASS_RUN_STATE_IMPOSSIBLE":                       7,
+		"FINDING_CLASS_RUN_DISAGREES_WITH_STORE":                   8,
+		"FINDING_CLASS_DEPLOY_OVERLAP_TOO_LONG":                    10,
+		"FINDING_CLASS_DEPLOY_STAGE_MISSING":                       11,
+		"FINDING_CLASS_DEPLOY_RUN_ON_OLD_VERSION":                  12,
+		"FINDING_CLASS_ACTIVITY_RETRY_LIMIT_TOO_HIGH":              13,
+		"FINDING_CLASS_RUN_REFUSING_UPDATES":                       14,
+		"FINDING_CLASS_NAMESPACE_NOT_PULLED":                       15,
+		"FINDING_CLASS_DEPLOY_FIXED_PROBLEM":                       16,
+		"FINDING_CLASS_RUN_CLOSED_AS_FAILED":                       18,
+		"FINDING_CLASS_ENGINE_METRICS_NEVER_SENT":                  19,
+		"FINDING_CLASS_WORKER_SLOTS_USED_UP":                       21,
+		"FINDING_CLASS_WORKER_STICKY_CACHE_TOO_SMALL":              22,
+		"FINDING_CLASS_WORKER_WORKFLOW_TASKS_SLOW":                 23,
+		"FINDING_CLASS_WORKER_REPLAY_SLOW":                         24,
+		"FINDING_CLASS_ACTIVITY_FAILING":                           25,
+		"FINDING_CLASS_WORKER_CANNOT_REACH_ENGINE":                 28,
+		"FINDING_CLASS_TASK_QUEUE_WITHOUT_POLLERS":                 31,
+		"FINDING_CLASS_TASK_QUEUE_FALLING_BEHIND":                  32,
+		"FINDING_CLASS_TASK_QUEUE_TASKS_NOT_MATCHED_DIRECTLY":      33,
+		"FINDING_CLASS_ACTIVITY_RETRIES_RISING":                    40,
+		"FINDING_CLASS_ACTIVITY_RETRIES_NEVER_SUCCEED":             41,
+		"FINDING_CLASS_ACTIVITY_HEARTBEAT_TIMEOUT_MISSING":         42,
+		"FINDING_CLASS_RUN_MESSAGES_UNHANDLED":                     44,
+		"FINDING_CLASS_WORKER_REPORTS_DROPPED":                     45,
+		"FINDING_CLASS_NAMESPACE_NEAR_LIMIT":                       46,
+		"FINDING_CLASS_NAMESPACE_THROTTLED":                        47,
+		"FINDING_CLASS_ENGINE_METRICS_NOT_SET_UP":                  48,
+		"FINDING_CLASS_ACTIVITY_NEAR_TIMEOUT":                      50,
+		"FINDING_CLASS_ENGINE_REFUSES_FLOWRENSIC":                  52,
+		"FINDING_CLASS_ENGINE_UNREACHABLE":                         53,
+		"FINDING_CLASS_WORKER_REPORTS_REFUSED":                     54,
+		"FINDING_CLASS_NAMESPACE_NOT_FOUND":                        55,
+		"FINDING_CLASS_ENV_WITHOUT_NAMESPACE":                      56,
+		"FINDING_CLASS_DEPLOY_E2E_MET_OLD_WORKERS":                 58,
+		"FINDING_CLASS_DEPLOY_E2E_LOST_ATTEMPTS":                   59,
+		"FINDING_CLASS_RUN_STUCK_FORGOTTEN":                        60,
+		"FINDING_CLASS_REPLAY_INTERCEPTORS_DIFFER":                 61,
+		"FINDING_CLASS_INTERCEPTORS_CHANGED_WITH_RUNS_OPEN":        62,
+		"FINDING_CLASS_FLOWRENSIC_JOB_BEHIND":                      63,
+		"FINDING_CLASS_FLOWRENSIC_JOB_STOPPED":                     64,
+		"FINDING_CLASS_FLOWRENSIC_JOB_BACKLOG_GROWING":             67,
+		"FINDING_CLASS_STORED_HISTORY_UNREADABLE":                  68,
+		"FINDING_CLASS_WORKER_SDK_VERSIONS_MIXED":                  69,
+		"FINDING_CLASS_WORKER_REPORTS_TOO_LARGE":                   70,
+		"FINDING_CLASS_HISTORY_TOO_LONG":                           71,
+		"FINDING_CLASS_HISTORY_STORAGE_TOO_LARGE":                  72,
+		"FINDING_CLASS_INDIVIDUAL_PAYLOAD_TOO_LARGE":               73,
+		"FINDING_CLASS_RUN_STUCK_WAITING":                          74,
+		"FINDING_CLASS_WORKER_POLLERS_TOO_MANY":                    76,
+		"FINDING_CLASS_WORKER_POLLERS_TOO_FEW":                     77,
+		"FINDING_CLASS_ACTIVITY_TIMEOUT_TOO_SHORT":                 78,
+		"FINDING_CLASS_ACTIVITY_TIMEOUT_TOO_LONG":                  79,
+		"FINDING_CLASS_ACTIVITY_TIMED_OUT_WAITING_FOR_WORKER":      80,
+		"FINDING_CLASS_ACTIVITY_TIMED_OUT_MISSING_HEARTBEAT":       81,
+		"FINDING_CLASS_ACTIVITY_TIMED_OUT_RUNNING_TOO_LONG":        82,
+		"FINDING_CLASS_ENGINE_SHARDS_MOVING":                       83,
+		"FINDING_CLASS_ENGINE_RETURNING_ERRORS":                    84,
+		"FINDING_CLASS_ENGINE_CALLS_SLOW":                          85,
+		"FINDING_CLASS_FLOWRENSIC_SERVER_CPU_HIGH":                 86,
+		"FINDING_CLASS_FLOWRENSIC_SERVER_MEMORY_HIGH":              87,
+		"FINDING_CLASS_FLOWRENSIC_DB_POOL_EXHAUSTED":               88,
+		"FINDING_CLASS_FLOWRENSIC_REQUESTS_LAG":                    89,
+		"FINDING_CLASS_NAMESPACE_RESOURCE_TOO_BUSY":                90,
+		"FINDING_CLASS_ENGINE_DATABASE_FAILING":                    91,
+		"FINDING_CLASS_ENGINE_DATABASE_SLOW":                       92,
+		"FINDING_CLASS_DATA_STOPPED_ENGINE_METRICS":                93,
+		"FINDING_CLASS_DATA_STOPPED_HISTORIES":                     94,
+		"FINDING_CLASS_DATA_STOPPED_WORKER_METRICS":                95,
+		"FINDING_CLASS_DATA_STOPPED_ACTIVITY_EVENTS":               96,
+		"FINDING_CLASS_WORKER_WENT_SILENT":                         97,
+		"FINDING_CLASS_NAMESPACE_NEAR_POLLER_LIMIT":                98,
+		"FINDING_CLASS_WORKFLOW_TASK_TIMED_OUT_RUNNING_TOO_LONG":   99,
+		"FINDING_CLASS_WORKFLOW_TASK_TIMED_OUT_WAITING_FOR_WORKER": 100,
 	}
 )
 
@@ -267,54 +344,60 @@ func (FindingClass) EnumDescriptor() ([]byte, []int) {
 	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{0}
 }
 
-// FindingTag says what a finding is about: the customer's workflows, or
-// Flowrensic itself and the data it gets. The class decides it.
-type FindingTag int32
+// FindingGroup is what a finding is about, one tab of the Findings page
+// each. The class decides it, from where its problem is.
+type FindingGroup int32
 
 const (
-	FindingTag_FINDING_TAG_UNSPECIFIED FindingTag = 0
-	FindingTag_FINDING_TAG_WORKFLOWS   FindingTag = 1
-	FindingTag_FINDING_TAG_FLOWRENSIC  FindingTag = 2
+	FindingGroup_FINDING_GROUP_UNSPECIFIED FindingGroup = 0
+	FindingGroup_FINDING_GROUP_WORKFLOWS   FindingGroup = 1
+	FindingGroup_FINDING_GROUP_WORKERS     FindingGroup = 2
+	FindingGroup_FINDING_GROUP_DEPLOYS     FindingGroup = 3
+	FindingGroup_FINDING_GROUP_FLOWRENSIC  FindingGroup = 4
 )
 
-// Enum value maps for FindingTag.
+// Enum value maps for FindingGroup.
 var (
-	FindingTag_name = map[int32]string{
-		0: "FINDING_TAG_UNSPECIFIED",
-		1: "FINDING_TAG_WORKFLOWS",
-		2: "FINDING_TAG_FLOWRENSIC",
+	FindingGroup_name = map[int32]string{
+		0: "FINDING_GROUP_UNSPECIFIED",
+		1: "FINDING_GROUP_WORKFLOWS",
+		2: "FINDING_GROUP_WORKERS",
+		3: "FINDING_GROUP_DEPLOYS",
+		4: "FINDING_GROUP_FLOWRENSIC",
 	}
-	FindingTag_value = map[string]int32{
-		"FINDING_TAG_UNSPECIFIED": 0,
-		"FINDING_TAG_WORKFLOWS":   1,
-		"FINDING_TAG_FLOWRENSIC":  2,
+	FindingGroup_value = map[string]int32{
+		"FINDING_GROUP_UNSPECIFIED": 0,
+		"FINDING_GROUP_WORKFLOWS":   1,
+		"FINDING_GROUP_WORKERS":     2,
+		"FINDING_GROUP_DEPLOYS":     3,
+		"FINDING_GROUP_FLOWRENSIC":  4,
 	}
 )
 
-func (x FindingTag) Enum() *FindingTag {
-	p := new(FindingTag)
+func (x FindingGroup) Enum() *FindingGroup {
+	p := new(FindingGroup)
 	*p = x
 	return p
 }
 
-func (x FindingTag) String() string {
+func (x FindingGroup) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (FindingTag) Descriptor() protoreflect.EnumDescriptor {
+func (FindingGroup) Descriptor() protoreflect.EnumDescriptor {
 	return file_flowrensic_v1_finding_proto_enumTypes[1].Descriptor()
 }
 
-func (FindingTag) Type() protoreflect.EnumType {
+func (FindingGroup) Type() protoreflect.EnumType {
 	return &file_flowrensic_v1_finding_proto_enumTypes[1]
 }
 
-func (x FindingTag) Number() protoreflect.EnumNumber {
+func (x FindingGroup) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use FindingTag.Descriptor instead.
-func (FindingTag) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use FindingGroup.Descriptor instead.
+func (FindingGroup) EnumDescriptor() ([]byte, []int) {
 	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{1}
 }
 
@@ -370,12 +453,71 @@ func (Severity) EnumDescriptor() ([]byte, []int) {
 	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{2}
 }
 
+// RuleStatus is the status of a rule: it runs, it runs and is phased out, it
+// does not run, or it runs and its findings raise no alerts.
+type RuleStatus int32
+
+const (
+	RuleStatus_RULE_STATUS_UNSPECIFIED  RuleStatus = 0
+	RuleStatus_RULE_STATUS_ACTIVE       RuleStatus = 1
+	RuleStatus_RULE_STATUS_DEPRECATED   RuleStatus = 2
+	RuleStatus_RULE_STATUS_RETIRED      RuleStatus = 3
+	RuleStatus_RULE_STATUS_EXPERIMENTAL RuleStatus = 4
+)
+
+// Enum value maps for RuleStatus.
+var (
+	RuleStatus_name = map[int32]string{
+		0: "RULE_STATUS_UNSPECIFIED",
+		1: "RULE_STATUS_ACTIVE",
+		2: "RULE_STATUS_DEPRECATED",
+		3: "RULE_STATUS_RETIRED",
+		4: "RULE_STATUS_EXPERIMENTAL",
+	}
+	RuleStatus_value = map[string]int32{
+		"RULE_STATUS_UNSPECIFIED":  0,
+		"RULE_STATUS_ACTIVE":       1,
+		"RULE_STATUS_DEPRECATED":   2,
+		"RULE_STATUS_RETIRED":      3,
+		"RULE_STATUS_EXPERIMENTAL": 4,
+	}
+)
+
+func (x RuleStatus) Enum() *RuleStatus {
+	p := new(RuleStatus)
+	*p = x
+	return p
+}
+
+func (x RuleStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RuleStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_flowrensic_v1_finding_proto_enumTypes[3].Descriptor()
+}
+
+func (RuleStatus) Type() protoreflect.EnumType {
+	return &file_flowrensic_v1_finding_proto_enumTypes[3]
+}
+
+func (x RuleStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RuleStatus.Descriptor instead.
+func (RuleStatus) EnumDescriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{3}
+}
+
+// FindingStatus is worked out from the current episode of a finding, never
+// set by hand (FPP-120-R09): active while it goes on, quiet after.
 type FindingStatus int32
 
 const (
 	FindingStatus_FINDING_STATUS_UNSPECIFIED FindingStatus = 0
 	FindingStatus_FINDING_STATUS_ACTIVE      FindingStatus = 1
-	FindingStatus_FINDING_STATUS_ARCHIVED    FindingStatus = 2
+	FindingStatus_FINDING_STATUS_QUIET       FindingStatus = 3
 )
 
 // Enum value maps for FindingStatus.
@@ -383,12 +525,12 @@ var (
 	FindingStatus_name = map[int32]string{
 		0: "FINDING_STATUS_UNSPECIFIED",
 		1: "FINDING_STATUS_ACTIVE",
-		2: "FINDING_STATUS_ARCHIVED",
+		3: "FINDING_STATUS_QUIET",
 	}
 	FindingStatus_value = map[string]int32{
 		"FINDING_STATUS_UNSPECIFIED": 0,
 		"FINDING_STATUS_ACTIVE":      1,
-		"FINDING_STATUS_ARCHIVED":    2,
+		"FINDING_STATUS_QUIET":       3,
 	}
 )
 
@@ -403,11 +545,11 @@ func (x FindingStatus) String() string {
 }
 
 func (FindingStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_flowrensic_v1_finding_proto_enumTypes[3].Descriptor()
+	return file_flowrensic_v1_finding_proto_enumTypes[4].Descriptor()
 }
 
 func (FindingStatus) Type() protoreflect.EnumType {
-	return &file_flowrensic_v1_finding_proto_enumTypes[3]
+	return &file_flowrensic_v1_finding_proto_enumTypes[4]
 }
 
 func (x FindingStatus) Number() protoreflect.EnumNumber {
@@ -416,25 +558,40 @@ func (x FindingStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use FindingStatus.Descriptor instead.
 func (FindingStatus) EnumDescriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{3}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{4}
 }
 
-// Evidence points at the events that justify a finding. Without it a finding is
-// an opinion.
+// Evidence is one observation of a finding (FPP-158-R28): one thing a rule
+// saw, at the time of the data, of one unit inside the subject, such as a
+// run or a worker process.
 type Evidence struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	EventSeq int64                  `protobuf:"varint,1,opt,name=event_seq,json=eventSeq,proto3" json:"event_seq,omitempty"`
 	Note     string                 `protobuf:"bytes,2,opt,name=note,proto3" json:"note,omitempty"`
-	// The run this entry is about, on a finding of runs. Empty on any other
-	// finding.
+	// The run of the observation, empty when its unit is not a run.
 	RunId string `protobuf:"bytes,3,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	// When the run joined the finding, on a finding of runs.
+	// The time of the data the rule saw, the first time on an observation
+	// seen again.
 	At *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=at,proto3" json:"at,omitempty"`
-	// The workflow id of that run, on a finding of runs.
+	// The workflow id of that run, empty when there is no run.
 	WorkflowId string `protobuf:"bytes,5,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
 	// The link to that run in the Temporal UI of its env, empty when the env
 	// has none.
 	TemporalUiUrl string `protobuf:"bytes,6,opt,name=temporal_ui_url,json=temporalUiUrl,proto3" json:"temporal_ui_url,omitempty"`
+	// What the observation is about inside the subject: a run, a worker
+	// process, an ephemeral run, an activity type.
+	Unit string `protobuf:"bytes,7,opt,name=unit,proto3" json:"unit,omitempty"`
+	// The time of the newest data that saw it again.
+	LastSeenAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
+	// When it stopped holding and why, on a state observation that stopped.
+	// Empty while it holds, and on an observation of a quiet or once class.
+	StoppedAt  *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=stopped_at,json=stoppedAt,proto3" json:"stopped_at,omitempty"`
+	StopReason string                 `protobuf:"bytes,10,opt,name=stop_reason,json=stopReason,proto3" json:"stop_reason,omitempty"`
+	// The rule that saw it and the version text of that rule.
+	Rule        string `protobuf:"bytes,11,opt,name=rule,proto3" json:"rule,omitempty"`
+	RuleVersion string `protobuf:"bytes,12,opt,name=rule_version,json=ruleVersion,proto3" json:"rule_version,omitempty"`
+	// The number of the episode it belongs to.
+	Episode       int32 `protobuf:"varint,13,opt,name=episode,proto3" json:"episode,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -511,20 +668,172 @@ func (x *Evidence) GetTemporalUiUrl() string {
 	return ""
 }
 
+func (x *Evidence) GetUnit() string {
+	if x != nil {
+		return x.Unit
+	}
+	return ""
+}
+
+func (x *Evidence) GetLastSeenAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastSeenAt
+	}
+	return nil
+}
+
+func (x *Evidence) GetStoppedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StoppedAt
+	}
+	return nil
+}
+
+func (x *Evidence) GetStopReason() string {
+	if x != nil {
+		return x.StopReason
+	}
+	return ""
+}
+
+func (x *Evidence) GetRule() string {
+	if x != nil {
+		return x.Rule
+	}
+	return ""
+}
+
+func (x *Evidence) GetRuleVersion() string {
+	if x != nil {
+		return x.RuleVersion
+	}
+	return ""
+}
+
+func (x *Evidence) GetEpisode() int32 {
+	if x != nil {
+		return x.Episode
+	}
+	return 0
+}
+
+// FindingEpisode is one stretch of time while the problem of a finding was
+// going on (FPP-158-R27).
+type FindingEpisode struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Its number, 1 for the first, by start time.
+	Number    int32                  `protobuf:"varint,1,opt,name=number,proto3" json:"number,omitempty"`
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// The time of its newest observation.
+	LastSeenAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
+	// When it ended and why (FPP-158-R35): quiet, cleared, gone, once,
+	// deploy, won over, rule retired or turned off. Empty while it goes on.
+	EndedAt   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=ended_at,json=endedAt,proto3" json:"ended_at,omitempty"`
+	EndReason string                 `protobuf:"bytes,5,opt,name=end_reason,json=endReason,proto3" json:"end_reason,omitempty"`
+	// How many observations it holds, the ones retention deleted included.
+	Observations int32 `protobuf:"varint,6,opt,name=observations,proto3" json:"observations,omitempty"`
+	// How many of them the store still keeps. Given by ListFindingEpisodes
+	// only, 0 elsewhere.
+	Kept          int32 `protobuf:"varint,7,opt,name=kept,proto3" json:"kept,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FindingEpisode) Reset() {
+	*x = FindingEpisode{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FindingEpisode) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FindingEpisode) ProtoMessage() {}
+
+func (x *FindingEpisode) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FindingEpisode.ProtoReflect.Descriptor instead.
+func (*FindingEpisode) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *FindingEpisode) GetNumber() int32 {
+	if x != nil {
+		return x.Number
+	}
+	return 0
+}
+
+func (x *FindingEpisode) GetStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartedAt
+	}
+	return nil
+}
+
+func (x *FindingEpisode) GetLastSeenAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastSeenAt
+	}
+	return nil
+}
+
+func (x *FindingEpisode) GetEndedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.EndedAt
+	}
+	return nil
+}
+
+func (x *FindingEpisode) GetEndReason() string {
+	if x != nil {
+		return x.EndReason
+	}
+	return ""
+}
+
+func (x *FindingEpisode) GetObservations() int32 {
+	if x != nil {
+		return x.Observations
+	}
+	return 0
+}
+
+func (x *FindingEpisode) GetKept() int32 {
+	if x != nil {
+		return x.Kept
+	}
+	return 0
+}
+
 type Finding struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	Id         string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	RunId      string                 `protobuf:"bytes,2,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
-	Class      FindingClass           `protobuf:"varint,3,opt,name=class,proto3,enum=flowrensic.v1.FindingClass" json:"class,omitempty"`
-	Severity   Severity               `protobuf:"varint,4,opt,name=severity,proto3,enum=flowrensic.v1.Severity" json:"severity,omitempty"`
-	Summary    string                 `protobuf:"bytes,5,opt,name=summary,proto3" json:"summary,omitempty"`
-	Analyzer   string                 `protobuf:"bytes,6,opt,name=analyzer,proto3" json:"analyzer,omitempty"`
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Id       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Class    FindingClass           `protobuf:"varint,3,opt,name=class,proto3,enum=flowrensic.v1.FindingClass" json:"class,omitempty"`
+	Severity Severity               `protobuf:"varint,4,opt,name=severity,proto3,enum=flowrensic.v1.Severity" json:"severity,omitempty"`
+	Summary  string                 `protobuf:"bytes,5,opt,name=summary,proto3" json:"summary,omitempty"`
+	Analyzer string                 `protobuf:"bytes,6,opt,name=analyzer,proto3" json:"analyzer,omitempty"`
+	// The observations the finding keeps, of every episode, oldest first:
+	// at most 100 in a list, one page of them in GetFinding. Each names its
+	// episode.
 	Evidence   []*Evidence            `protobuf:"bytes,7,rep,name=evidence,proto3" json:"evidence,omitempty"`
 	DetectedAt *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=detected_at,json=detectedAt,proto3" json:"detected_at,omitempty"`
-	// The deploy a finding hangs on. A finding about a deploy carries no run.
+	// The deploy a finding hangs on.
 	DeployId string `protobuf:"bytes,9,opt,name=deploy_id,json=deployId,proto3" json:"deploy_id,omitempty"`
-	// The run's workflow id and type, so a flag names the run without a second
-	// call. Empty on a finding that hangs on a deploy.
+	// The workflow id of the first run the finding held, and its workflow
+	// type. Empty on a finding of no run.
 	WorkflowId   string `protobuf:"bytes,10,opt,name=workflow_id,json=workflowId,proto3" json:"workflow_id,omitempty"`
 	WorkflowType string `protobuf:"bytes,11,opt,name=workflow_type,json=workflowType,proto3" json:"workflow_type,omitempty"`
 	// The numbers the class carries, keyed by name. A key the class has nothing
@@ -533,34 +842,51 @@ type Finding struct {
 	// The full url that opens the finding in the UI: the base url of the UI,
 	// then /findings?finding= and the id.
 	Url string `protobuf:"bytes,13,opt,name=url,proto3" json:"url,omitempty"`
-	// How many runs the finding holds: every run of a finding of runs, 1 for
-	// any other finding on a run, 0 for a finding on no run.
-	RunCount int32 `protobuf:"varint,14,opt,name=run_count,json=runCount,proto3" json:"run_count,omitempty"`
-	// When the first and the last of those runs came. Empty when it holds none.
-	FirstRunAt *timestamppb.Timestamp `protobuf:"bytes,15,opt,name=first_run_at,json=firstRunAt,proto3" json:"first_run_at,omitempty"`
-	LastRunAt  *timestamppb.Timestamp `protobuf:"bytes,16,opt,name=last_run_at,json=lastRunAt,proto3" json:"last_run_at,omitempty"`
-	// When the finding ended. Empty while it has not ended.
-	EndedAt *timestamppb.Timestamp `protobuf:"bytes,17,opt,name=ended_at,json=endedAt,proto3" json:"ended_at,omitempty"`
-	// Active or archived. Never unspecified on a finding the server gives.
+	// Active while its current episode goes on, quiet after (FPP-120-R09).
+	// Never unspecified on a finding the server gives.
 	Status FindingStatus `protobuf:"varint,18,opt,name=status,proto3,enum=flowrensic.v1.FindingStatus" json:"status,omitempty"`
-	// When the finding was archived. Empty while it is active.
-	ArchivedAt *timestamppb.Timestamp `protobuf:"bytes,19,opt,name=archived_at,json=archivedAt,proto3" json:"archived_at,omitempty"`
 	// MistakenAt is when a new version of the finding's rule took it back,
 	// unset while it has not. MistakenBy is that rule and its version.
 	MistakenAt *timestamppb.Timestamp `protobuf:"bytes,20,opt,name=mistaken_at,json=mistakenAt,proto3" json:"mistaken_at,omitempty"`
 	MistakenBy string                 `protobuf:"bytes,21,opt,name=mistaken_by,json=mistakenBy,proto3" json:"mistaken_by,omitempty"`
-	// The link to the run the finding names in the Temporal UI of its env,
-	// empty when it names no run or the env has no Temporal UI.
+	// The link in the Temporal UI of its env to the run of the newest
+	// observation in evidence, empty when none has a run or the env has no
+	// Temporal UI.
 	TemporalUiUrl string `protobuf:"bytes,22,opt,name=temporal_ui_url,json=temporalUiUrl,proto3" json:"temporal_ui_url,omitempty"`
-	// Workflows or flowrensic. Never unspecified on a finding the server gives.
-	Tag           FindingTag `protobuf:"varint,24,opt,name=tag,proto3,enum=flowrensic.v1.FindingTag" json:"tag,omitempty"`
+	// The status of the finding's rule now. Never unspecified on a finding the
+	// server gives; a rule the server has no descriptor of is retired.
+	RuleStatus RuleStatus `protobuf:"varint,25,opt,name=rule_status,json=ruleStatus,proto3,enum=flowrensic.v1.RuleStatus" json:"rule_status,omitempty"`
+	// The rule that replaces a deprecated rule, empty when there is none.
+	ReplacedBy string `protobuf:"bytes,26,opt,name=replaced_by,json=replacedBy,proto3" json:"replaced_by,omitempty"`
+	// The version text of the rule that raised the finding, when it was first
+	// written: the rule's number, then each setting as name=value, joined by ;.
+	RuleVersion string `protobuf:"bytes,28,opt,name=rule_version,json=ruleVersion,proto3" json:"rule_version,omitempty"`
+	// How the rule engine knows the problem is still there (FPP-158-R29):
+	// quiet, state or once.
+	HoldsBy string `protobuf:"bytes,29,opt,name=holds_by,json=holdsBy,proto3" json:"holds_by,omitempty"`
+	// The current episode, the one that starts last.
+	Episode *FindingEpisode `protobuf:"bytes,30,opt,name=episode,proto3" json:"episode,omitempty"`
+	// The times of the first and the newest observation of every episode
+	// (FPP-158-R05).
+	FirstSeenAt *timestamppb.Timestamp `protobuf:"bytes,31,opt,name=first_seen_at,json=firstSeenAt,proto3" json:"first_seen_at,omitempty"`
+	LastSeenAt  *timestamppb.Timestamp `protobuf:"bytes,32,opt,name=last_seen_at,json=lastSeenAt,proto3" json:"last_seen_at,omitempty"`
+	// The parts of its key (FPP-158-R33): the env, the namespace, the
+	// subject and the fingerprint, each empty when the key has none.
+	Env         string `protobuf:"bytes,33,opt,name=env,proto3" json:"env,omitempty"`
+	Namespace   string `protobuf:"bytes,34,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Subject     string `protobuf:"bytes,35,opt,name=subject,proto3" json:"subject,omitempty"`
+	Fingerprint string `protobuf:"bytes,36,opt,name=fingerprint,proto3" json:"fingerprint,omitempty"`
+	// Whether a mark the user put matches the finding (FPP-305-R04): it is
+	// still raised and stored, and the Findings page shows it only with Show
+	// silenced on.
+	Silenced      bool `protobuf:"varint,37,opt,name=silenced,proto3" json:"silenced,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Finding) Reset() {
 	*x = Finding{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[1]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -572,7 +898,7 @@ func (x *Finding) String() string {
 func (*Finding) ProtoMessage() {}
 
 func (x *Finding) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[1]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -585,19 +911,12 @@ func (x *Finding) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Finding.ProtoReflect.Descriptor instead.
 func (*Finding) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{1}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Finding) GetId() string {
 	if x != nil {
 		return x.Id
-	}
-	return ""
-}
-
-func (x *Finding) GetRunId() string {
-	if x != nil {
-		return x.RunId
 	}
 	return ""
 }
@@ -679,46 +998,11 @@ func (x *Finding) GetUrl() string {
 	return ""
 }
 
-func (x *Finding) GetRunCount() int32 {
-	if x != nil {
-		return x.RunCount
-	}
-	return 0
-}
-
-func (x *Finding) GetFirstRunAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.FirstRunAt
-	}
-	return nil
-}
-
-func (x *Finding) GetLastRunAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.LastRunAt
-	}
-	return nil
-}
-
-func (x *Finding) GetEndedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.EndedAt
-	}
-	return nil
-}
-
 func (x *Finding) GetStatus() FindingStatus {
 	if x != nil {
 		return x.Status
 	}
 	return FindingStatus_FINDING_STATUS_UNSPECIFIED
-}
-
-func (x *Finding) GetArchivedAt() *timestamppb.Timestamp {
-	if x != nil {
-		return x.ArchivedAt
-	}
-	return nil
 }
 
 func (x *Finding) GetMistakenAt() *timestamppb.Timestamp {
@@ -742,11 +1026,88 @@ func (x *Finding) GetTemporalUiUrl() string {
 	return ""
 }
 
-func (x *Finding) GetTag() FindingTag {
+func (x *Finding) GetRuleStatus() RuleStatus {
 	if x != nil {
-		return x.Tag
+		return x.RuleStatus
 	}
-	return FindingTag_FINDING_TAG_UNSPECIFIED
+	return RuleStatus_RULE_STATUS_UNSPECIFIED
+}
+
+func (x *Finding) GetReplacedBy() string {
+	if x != nil {
+		return x.ReplacedBy
+	}
+	return ""
+}
+
+func (x *Finding) GetRuleVersion() string {
+	if x != nil {
+		return x.RuleVersion
+	}
+	return ""
+}
+
+func (x *Finding) GetHoldsBy() string {
+	if x != nil {
+		return x.HoldsBy
+	}
+	return ""
+}
+
+func (x *Finding) GetEpisode() *FindingEpisode {
+	if x != nil {
+		return x.Episode
+	}
+	return nil
+}
+
+func (x *Finding) GetFirstSeenAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.FirstSeenAt
+	}
+	return nil
+}
+
+func (x *Finding) GetLastSeenAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastSeenAt
+	}
+	return nil
+}
+
+func (x *Finding) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
+func (x *Finding) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *Finding) GetSubject() string {
+	if x != nil {
+		return x.Subject
+	}
+	return ""
+}
+
+func (x *Finding) GetFingerprint() string {
+	if x != nil {
+		return x.Fingerprint
+	}
+	return ""
+}
+
+func (x *Finding) GetSilenced() bool {
+	if x != nil {
+		return x.Silenced
+	}
+	return false
 }
 
 // One key or the other, or neither: two of the deploy findings hang on a
@@ -765,8 +1126,9 @@ type ListFindingsRequest struct {
 	// Matched whole, as written.
 	WorkflowType string `protobuf:"bytes,8,opt,name=workflow_type,json=workflowType,proto3" json:"workflow_type,omitempty"`
 	// The field of Finding the whole list is sorted by, by its name here, such
-	// as run_count. Empty is detected_at, newest first. Read only when neither
-	// key is given.
+	// as first_seen_at, or observations for the count of the current episode.
+	// Empty is detected_at, newest first. Read only when
+	// neither key is given.
 	Sort string `protobuf:"bytes,9,opt,name=sort,proto3" json:"sort,omitempty"`
 	// The sort field goes from large to small, or for text from z to a.
 	Descending bool `protobuf:"varint,10,opt,name=descending,proto3" json:"descending,omitempty"`
@@ -774,28 +1136,31 @@ type ListFindingsRequest struct {
 	// that come from other rows first. The server's findings clock writes those
 	// every FLOWRENSIC_FINDINGS_INTERVAL. The UI sets it.
 	StoredOnly bool `protobuf:"varint,11,opt,name=stored_only,json=storedOnly,proto3" json:"stored_only,omitempty"`
-	// Keeps only the findings of this status, and is not used when left
-	// empty. Read only when neither key is given.
+	// Keeps only the findings of this status, active or quiet, and is not
+	// used when left empty. Read only when neither key is given.
 	Status FindingStatus `protobuf:"varint,12,opt,name=status,proto3,enum=flowrensic.v1.FindingStatus" json:"status,omitempty"`
 	// Mistaken gives only the findings a new rule version took back. Unset, it
 	// gives none of them.
 	Mistaken bool `protobuf:"varint,13,opt,name=mistaken,proto3" json:"mistaken,omitempty"`
-	// Keeps only the findings of this tag, and is not used when left empty.
-	// Read only when neither key is given.
-	Tag FindingTag `protobuf:"varint,14,opt,name=tag,proto3,enum=flowrensic.v1.FindingTag" json:"tag,omitempty"`
 	// Keeps only the findings of the workflow types that worker runs, matched
 	// as written, and is not used when left empty. Read only when neither key
 	// is given.
 	WorkerName string `protobuf:"bytes,15,opt,name=worker_name,json=workerName,proto3" json:"worker_name,omitempty"`
 	// The page of the list asked for.
-	Page          *PageRequest `protobuf:"bytes,16,opt,name=page,proto3" json:"page,omitempty"`
+	Page *PageRequest `protobuf:"bytes,16,opt,name=page,proto3" json:"page,omitempty"`
+	// Keeps only the findings of the classes of this group, and is not used
+	// when left unspecified. Read only when neither key is given.
+	Group FindingGroup `protobuf:"varint,17,opt,name=group,proto3,enum=flowrensic.v1.FindingGroup" json:"group,omitempty"`
+	// Gives only the silenced findings when set, and leaves them out when
+	// unset (FPP-305-R05). Read only when neither key is given.
+	Silenced      bool `protobuf:"varint,19,opt,name=silenced,proto3" json:"silenced,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListFindingsRequest) Reset() {
 	*x = ListFindingsRequest{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[2]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -807,7 +1172,7 @@ func (x *ListFindingsRequest) String() string {
 func (*ListFindingsRequest) ProtoMessage() {}
 
 func (x *ListFindingsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[2]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -820,7 +1185,7 @@ func (x *ListFindingsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFindingsRequest.ProtoReflect.Descriptor instead.
 func (*ListFindingsRequest) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{2}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListFindingsRequest) GetRunId() string {
@@ -900,13 +1265,6 @@ func (x *ListFindingsRequest) GetMistaken() bool {
 	return false
 }
 
-func (x *ListFindingsRequest) GetTag() FindingTag {
-	if x != nil {
-		return x.Tag
-	}
-	return FindingTag_FINDING_TAG_UNSPECIFIED
-}
-
 func (x *ListFindingsRequest) GetWorkerName() string {
 	if x != nil {
 		return x.WorkerName
@@ -921,6 +1279,20 @@ func (x *ListFindingsRequest) GetPage() *PageRequest {
 	return nil
 }
 
+func (x *ListFindingsRequest) GetGroup() FindingGroup {
+	if x != nil {
+		return x.Group
+	}
+	return FindingGroup_FINDING_GROUP_UNSPECIFIED
+}
+
+func (x *ListFindingsRequest) GetSilenced() bool {
+	if x != nil {
+		return x.Silenced
+	}
+	return false
+}
+
 type ListFindingsResponse struct {
 	state    protoimpl.MessageState `protogen:"open.v1"`
 	RunId    string                 `protobuf:"bytes,1,opt,name=run_id,json=runId,proto3" json:"run_id,omitempty"`
@@ -933,7 +1305,7 @@ type ListFindingsResponse struct {
 
 func (x *ListFindingsResponse) Reset() {
 	*x = ListFindingsResponse{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[3]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -945,7 +1317,7 @@ func (x *ListFindingsResponse) String() string {
 func (*ListFindingsResponse) ProtoMessage() {}
 
 func (x *ListFindingsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[3]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -958,7 +1330,7 @@ func (x *ListFindingsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListFindingsResponse.ProtoReflect.Descriptor instead.
 func (*ListFindingsResponse) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{3}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ListFindingsResponse) GetRunId() string {
@@ -982,6 +1354,351 @@ func (x *ListFindingsResponse) GetPage() *PageResponse {
 	return nil
 }
 
+// CountFindingGroupsRequest takes the filters of ListFindings that every tab
+// of the Findings page shows. Each is not used when left empty.
+type CountFindingGroupsRequest struct {
+	state    protoimpl.MessageState `protogen:"open.v1"`
+	Severity Severity               `protobuf:"varint,1,opt,name=severity,proto3,enum=flowrensic.v1.Severity" json:"severity,omitempty"`
+	Env      string                 `protobuf:"bytes,2,opt,name=env,proto3" json:"env,omitempty"`
+	Status   FindingStatus          `protobuf:"varint,3,opt,name=status,proto3,enum=flowrensic.v1.FindingStatus" json:"status,omitempty"`
+	Mistaken bool                   `protobuf:"varint,4,opt,name=mistaken,proto3" json:"mistaken,omitempty"`
+	// As silenced of ListFindingsRequest.
+	Silenced      bool `protobuf:"varint,6,opt,name=silenced,proto3" json:"silenced,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CountFindingGroupsRequest) Reset() {
+	*x = CountFindingGroupsRequest{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CountFindingGroupsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CountFindingGroupsRequest) ProtoMessage() {}
+
+func (x *CountFindingGroupsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CountFindingGroupsRequest.ProtoReflect.Descriptor instead.
+func (*CountFindingGroupsRequest) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CountFindingGroupsRequest) GetSeverity() Severity {
+	if x != nil {
+		return x.Severity
+	}
+	return Severity_SEVERITY_UNSPECIFIED
+}
+
+func (x *CountFindingGroupsRequest) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
+func (x *CountFindingGroupsRequest) GetStatus() FindingStatus {
+	if x != nil {
+		return x.Status
+	}
+	return FindingStatus_FINDING_STATUS_UNSPECIFIED
+}
+
+func (x *CountFindingGroupsRequest) GetMistaken() bool {
+	if x != nil {
+		return x.Mistaken
+	}
+	return false
+}
+
+func (x *CountFindingGroupsRequest) GetSilenced() bool {
+	if x != nil {
+		return x.Silenced
+	}
+	return false
+}
+
+// FindingGroupCount is one group: its classes, how many findings of the
+// filter are in it, and the worst severity among them.
+type FindingGroupCount struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Group FindingGroup           `protobuf:"varint,1,opt,name=group,proto3,enum=flowrensic.v1.FindingGroup" json:"group,omitempty"`
+	// The name the tab shows.
+	Name    string         `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Classes []FindingClass `protobuf:"varint,3,rep,packed,name=classes,proto3,enum=flowrensic.v1.FindingClass" json:"classes,omitempty"`
+	Count   int32          `protobuf:"varint,4,opt,name=count,proto3" json:"count,omitempty"`
+	// Unspecified when the group holds no finding.
+	Worst         Severity `protobuf:"varint,5,opt,name=worst,proto3,enum=flowrensic.v1.Severity" json:"worst,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *FindingGroupCount) Reset() {
+	*x = FindingGroupCount{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *FindingGroupCount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*FindingGroupCount) ProtoMessage() {}
+
+func (x *FindingGroupCount) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use FindingGroupCount.ProtoReflect.Descriptor instead.
+func (*FindingGroupCount) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *FindingGroupCount) GetGroup() FindingGroup {
+	if x != nil {
+		return x.Group
+	}
+	return FindingGroup_FINDING_GROUP_UNSPECIFIED
+}
+
+func (x *FindingGroupCount) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *FindingGroupCount) GetClasses() []FindingClass {
+	if x != nil {
+		return x.Classes
+	}
+	return nil
+}
+
+func (x *FindingGroupCount) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+func (x *FindingGroupCount) GetWorst() Severity {
+	if x != nil {
+		return x.Worst
+	}
+	return Severity_SEVERITY_UNSPECIFIED
+}
+
+type CountFindingGroupsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The count and the worst severity of the whole list.
+	Total int32    `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	Worst Severity `protobuf:"varint,2,opt,name=worst,proto3,enum=flowrensic.v1.Severity" json:"worst,omitempty"`
+	// One entry per group, in the order of the tabs.
+	Groups        []*FindingGroupCount `protobuf:"bytes,3,rep,name=groups,proto3" json:"groups,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CountFindingGroupsResponse) Reset() {
+	*x = CountFindingGroupsResponse{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CountFindingGroupsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CountFindingGroupsResponse) ProtoMessage() {}
+
+func (x *CountFindingGroupsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CountFindingGroupsResponse.ProtoReflect.Descriptor instead.
+func (*CountFindingGroupsResponse) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *CountFindingGroupsResponse) GetTotal() int32 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *CountFindingGroupsResponse) GetWorst() Severity {
+	if x != nil {
+		return x.Worst
+	}
+	return Severity_SEVERITY_UNSPECIFIED
+}
+
+func (x *CountFindingGroupsResponse) GetGroups() []*FindingGroupCount {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
+// ExportFindingsRequest asks for the findings ListFindings answers for the
+// same request, keys, filters, sort and page included (FPP-165-R03).
+type ExportFindingsRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	List  *ListFindingsRequest   `protobuf:"bytes,1,opt,name=list,proto3" json:"list,omitempty"`
+	// The format of the document (FPP-165-R05): flowrensic-finding-format,
+	// the finding format of FPP-165, which empty means too; ocsf, a JSON array of OCSF
+	// Detection Finding records; or sarif, one SARIF 2.1.0 log.
+	Format        string `protobuf:"bytes,2,opt,name=format,proto3" json:"format,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExportFindingsRequest) Reset() {
+	*x = ExportFindingsRequest{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExportFindingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExportFindingsRequest) ProtoMessage() {}
+
+func (x *ExportFindingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExportFindingsRequest.ProtoReflect.Descriptor instead.
+func (*ExportFindingsRequest) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *ExportFindingsRequest) GetList() *ListFindingsRequest {
+	if x != nil {
+		return x.List
+	}
+	return nil
+}
+
+func (x *ExportFindingsRequest) GetFormat() string {
+	if x != nil {
+		return x.Format
+	}
+	return ""
+}
+
+type ExportFindingsResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The findings of the page as one document in the format asked for, as
+	// JSON.
+	Document string `protobuf:"bytes,1,opt,name=document,proto3" json:"document,omitempty"`
+	// Whether the list goes on after this page, and how to ask for the next.
+	Page *PageResponse `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	// The URL of the JSON Schema of the document on flowrensic.com, the one
+	// place the schemas are stored: the schema of flowrensic-finding-format, or
+	// our copy of the official schema of the OCSF or SARIF version the document
+	// follows.
+	SchemaUrl     string `protobuf:"bytes,3,opt,name=schema_url,json=schemaUrl,proto3" json:"schema_url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ExportFindingsResponse) Reset() {
+	*x = ExportFindingsResponse{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ExportFindingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ExportFindingsResponse) ProtoMessage() {}
+
+func (x *ExportFindingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ExportFindingsResponse.ProtoReflect.Descriptor instead.
+func (*ExportFindingsResponse) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ExportFindingsResponse) GetDocument() string {
+	if x != nil {
+		return x.Document
+	}
+	return ""
+}
+
+func (x *ExportFindingsResponse) GetPage() *PageResponse {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+func (x *ExportFindingsResponse) GetSchemaUrl() string {
+	if x != nil {
+		return x.SchemaUrl
+	}
+	return ""
+}
+
 type ListThresholdsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -990,7 +1707,7 @@ type ListThresholdsRequest struct {
 
 func (x *ListThresholdsRequest) Reset() {
 	*x = ListThresholdsRequest{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[4]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1002,7 +1719,7 @@ func (x *ListThresholdsRequest) String() string {
 func (*ListThresholdsRequest) ProtoMessage() {}
 
 func (x *ListThresholdsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[4]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1015,7 +1732,7 @@ func (x *ListThresholdsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListThresholdsRequest.ProtoReflect.Descriptor instead.
 func (*ListThresholdsRequest) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{4}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{10}
 }
 
 // One threshold. The default and the value are written the way the env
@@ -1032,7 +1749,7 @@ type Threshold struct {
 
 func (x *Threshold) Reset() {
 	*x = Threshold{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[5]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1044,7 +1761,7 @@ func (x *Threshold) String() string {
 func (*Threshold) ProtoMessage() {}
 
 func (x *Threshold) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[5]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1057,7 +1774,7 @@ func (x *Threshold) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Threshold.ProtoReflect.Descriptor instead.
 func (*Threshold) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{5}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *Threshold) GetEnvVariable() string {
@@ -1097,7 +1814,7 @@ type ListThresholdsResponse struct {
 
 func (x *ListThresholdsResponse) Reset() {
 	*x = ListThresholdsResponse{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[6]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1109,7 +1826,7 @@ func (x *ListThresholdsResponse) String() string {
 func (*ListThresholdsResponse) ProtoMessage() {}
 
 func (x *ListThresholdsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[6]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1122,7 +1839,7 @@ func (x *ListThresholdsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListThresholdsResponse.ProtoReflect.Descriptor instead.
 func (*ListThresholdsResponse) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{6}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ListThresholdsResponse) GetThresholds() []*Threshold {
@@ -1137,7 +1854,8 @@ type GetFindingRequest struct {
 	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// As stored_only of ListFindingsRequest.
 	StoredOnly bool `protobuf:"varint,2,opt,name=stored_only,json=storedOnly,proto3" json:"stored_only,omitempty"`
-	// The page of the runs of a finding of runs asked for, in its evidence.
+	// The page of the observations of the finding asked for, in its
+	// evidence.
 	RunsPage      *PageRequest `protobuf:"bytes,3,opt,name=runs_page,json=runsPage,proto3" json:"runs_page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1145,7 +1863,7 @@ type GetFindingRequest struct {
 
 func (x *GetFindingRequest) Reset() {
 	*x = GetFindingRequest{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[7]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1157,7 +1875,7 @@ func (x *GetFindingRequest) String() string {
 func (*GetFindingRequest) ProtoMessage() {}
 
 func (x *GetFindingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[7]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1170,7 +1888,7 @@ func (x *GetFindingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFindingRequest.ProtoReflect.Descriptor instead.
 func (*GetFindingRequest) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{7}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetFindingRequest) GetId() string {
@@ -1197,7 +1915,8 @@ func (x *GetFindingRequest) GetRunsPage() *PageRequest {
 type GetFindingResponse struct {
 	state   protoimpl.MessageState `protogen:"open.v1"`
 	Finding *Finding               `protobuf:"bytes,1,opt,name=finding,proto3" json:"finding,omitempty"`
-	// Whether the runs of the finding go on after the ones in its evidence.
+	// Whether the observations of the finding go on after the ones in its
+	// evidence.
 	RunsPage      *PageResponse `protobuf:"bytes,2,opt,name=runs_page,json=runsPage,proto3" json:"runs_page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1205,7 +1924,7 @@ type GetFindingResponse struct {
 
 func (x *GetFindingResponse) Reset() {
 	*x = GetFindingResponse{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[8]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1217,7 +1936,7 @@ func (x *GetFindingResponse) String() string {
 func (*GetFindingResponse) ProtoMessage() {}
 
 func (x *GetFindingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[8]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1230,7 +1949,7 @@ func (x *GetFindingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetFindingResponse.ProtoReflect.Descriptor instead.
 func (*GetFindingResponse) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{8}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetFindingResponse) GetFinding() *Finding {
@@ -1247,30 +1966,32 @@ func (x *GetFindingResponse) GetRunsPage() *PageResponse {
 	return nil
 }
 
-type SetFindingStatusRequest struct {
-	state protoimpl.MessageState `protogen:"open.v1"`
-	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Active or archived. Unspecified is an invalid argument.
-	Status        FindingStatus `protobuf:"varint,2,opt,name=status,proto3,enum=flowrensic.v1.FindingStatus" json:"status,omitempty"`
+// ListFindingEpisodesRequest asks for the episodes of one finding, newest
+// first (FPP-112-R34).
+type ListFindingEpisodesRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	FindingId string                 `protobuf:"bytes,1,opt,name=finding_id,json=findingId,proto3" json:"finding_id,omitempty"`
+	// The page of the list asked for.
+	Page          *PageRequest `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetFindingStatusRequest) Reset() {
-	*x = SetFindingStatusRequest{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[9]
+func (x *ListFindingEpisodesRequest) Reset() {
+	*x = ListFindingEpisodesRequest{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetFindingStatusRequest) String() string {
+func (x *ListFindingEpisodesRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetFindingStatusRequest) ProtoMessage() {}
+func (*ListFindingEpisodesRequest) ProtoMessage() {}
 
-func (x *SetFindingStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[9]
+func (x *ListFindingEpisodesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1281,48 +2002,277 @@ func (x *SetFindingStatusRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetFindingStatusRequest.ProtoReflect.Descriptor instead.
-func (*SetFindingStatusRequest) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{9}
+// Deprecated: Use ListFindingEpisodesRequest.ProtoReflect.Descriptor instead.
+func (*ListFindingEpisodesRequest) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *SetFindingStatusRequest) GetId() string {
+func (x *ListFindingEpisodesRequest) GetFindingId() string {
+	if x != nil {
+		return x.FindingId
+	}
+	return ""
+}
+
+func (x *ListFindingEpisodesRequest) GetPage() *PageRequest {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+type ListFindingEpisodesResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The episodes the store keeps, newest first. One retention deleted is
+	// not given.
+	Episodes []*FindingEpisode `protobuf:"bytes,1,rep,name=episodes,proto3" json:"episodes,omitempty"`
+	// Whether the list goes on after this page, and how to ask for the next.
+	Page          *PageResponse `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFindingEpisodesResponse) Reset() {
+	*x = ListFindingEpisodesResponse{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFindingEpisodesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFindingEpisodesResponse) ProtoMessage() {}
+
+func (x *ListFindingEpisodesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFindingEpisodesResponse.ProtoReflect.Descriptor instead.
+func (*ListFindingEpisodesResponse) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{16}
+}
+
+func (x *ListFindingEpisodesResponse) GetEpisodes() []*FindingEpisode {
+	if x != nil {
+		return x.Episodes
+	}
+	return nil
+}
+
+func (x *ListFindingEpisodesResponse) GetPage() *PageResponse {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+// ListFindingObservationsRequest asks for the observations of one episode
+// of a finding, newest first (FPP-112-R34).
+type ListFindingObservationsRequest struct {
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	FindingId string                 `protobuf:"bytes,1,opt,name=finding_id,json=findingId,proto3" json:"finding_id,omitempty"`
+	// The number of the episode. Zero is the current episode.
+	Episode int32 `protobuf:"varint,2,opt,name=episode,proto3" json:"episode,omitempty"`
+	// The page of the list asked for. Zero is 50 observations.
+	Page          *PageRequest `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFindingObservationsRequest) Reset() {
+	*x = ListFindingObservationsRequest{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFindingObservationsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFindingObservationsRequest) ProtoMessage() {}
+
+func (x *ListFindingObservationsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFindingObservationsRequest.ProtoReflect.Descriptor instead.
+func (*ListFindingObservationsRequest) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ListFindingObservationsRequest) GetFindingId() string {
+	if x != nil {
+		return x.FindingId
+	}
+	return ""
+}
+
+func (x *ListFindingObservationsRequest) GetEpisode() int32 {
+	if x != nil {
+		return x.Episode
+	}
+	return 0
+}
+
+func (x *ListFindingObservationsRequest) GetPage() *PageRequest {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+type ListFindingObservationsResponse struct {
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Observations []*Evidence            `protobuf:"bytes,1,rep,name=observations,proto3" json:"observations,omitempty"`
+	// Whether the list goes on after this page, and how to ask for the next.
+	Page          *PageResponse `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListFindingObservationsResponse) Reset() {
+	*x = ListFindingObservationsResponse{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListFindingObservationsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListFindingObservationsResponse) ProtoMessage() {}
+
+func (x *ListFindingObservationsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListFindingObservationsResponse.ProtoReflect.Descriptor instead.
+func (*ListFindingObservationsResponse) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ListFindingObservationsResponse) GetObservations() []*Evidence {
+	if x != nil {
+		return x.Observations
+	}
+	return nil
+}
+
+func (x *ListFindingObservationsResponse) GetPage() *PageResponse {
+	if x != nil {
+		return x.Page
+	}
+	return nil
+}
+
+// SilenceFindingRequest puts a mark on a stored finding, to silence it as
+// expected behaviour (FPP-305-R02).
+type SilenceFindingRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Puts the fingerprint of the finding in the mark too, to silence only this
+	// exact case (FPP-305-R08). Unset, the mark holds its class, env,
+	// namespace and workflow type.
+	Exact         bool `protobuf:"varint,2,opt,name=exact,proto3" json:"exact,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SilenceFindingRequest) Reset() {
+	*x = SilenceFindingRequest{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SilenceFindingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SilenceFindingRequest) ProtoMessage() {}
+
+func (x *SilenceFindingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SilenceFindingRequest.ProtoReflect.Descriptor instead.
+func (*SilenceFindingRequest) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *SilenceFindingRequest) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *SetFindingStatusRequest) GetStatus() FindingStatus {
+func (x *SilenceFindingRequest) GetExact() bool {
 	if x != nil {
-		return x.Status
+		return x.Exact
 	}
-	return FindingStatus_FINDING_STATUS_UNSPECIFIED
+	return false
 }
 
-type SetFindingStatusResponse struct {
+type SilenceFindingResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// The finding as stored after the change.
+	// The finding as stored after the mark.
 	Finding       *Finding `protobuf:"bytes,1,opt,name=finding,proto3" json:"finding,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetFindingStatusResponse) Reset() {
-	*x = SetFindingStatusResponse{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[10]
+func (x *SilenceFindingResponse) Reset() {
+	*x = SilenceFindingResponse{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetFindingStatusResponse) String() string {
+func (x *SilenceFindingResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetFindingStatusResponse) ProtoMessage() {}
+func (*SilenceFindingResponse) ProtoMessage() {}
 
-func (x *SetFindingStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[10]
+func (x *SilenceFindingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1333,12 +2283,103 @@ func (x *SetFindingStatusResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetFindingStatusResponse.ProtoReflect.Descriptor instead.
-func (*SetFindingStatusResponse) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{10}
+// Deprecated: Use SilenceFindingResponse.ProtoReflect.Descriptor instead.
+func (*SilenceFindingResponse) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{20}
 }
 
-func (x *SetFindingStatusResponse) GetFinding() *Finding {
+func (x *SilenceFindingResponse) GetFinding() *Finding {
+	if x != nil {
+		return x.Finding
+	}
+	return nil
+}
+
+// UnsilenceFindingRequest takes off a silenced finding every mark that
+// matches it (FPP-305-R09).
+type UnsilenceFindingRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnsilenceFindingRequest) Reset() {
+	*x = UnsilenceFindingRequest{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnsilenceFindingRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnsilenceFindingRequest) ProtoMessage() {}
+
+func (x *UnsilenceFindingRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnsilenceFindingRequest.ProtoReflect.Descriptor instead.
+func (*UnsilenceFindingRequest) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *UnsilenceFindingRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type UnsilenceFindingResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// The finding as stored after the marks are gone.
+	Finding       *Finding `protobuf:"bytes,1,opt,name=finding,proto3" json:"finding,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnsilenceFindingResponse) Reset() {
+	*x = UnsilenceFindingResponse{}
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnsilenceFindingResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnsilenceFindingResponse) ProtoMessage() {}
+
+func (x *UnsilenceFindingResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnsilenceFindingResponse.ProtoReflect.Descriptor instead.
+func (*UnsilenceFindingResponse) Descriptor() ([]byte, []int) {
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *UnsilenceFindingResponse) GetFinding() *Finding {
 	if x != nil {
 		return x.Finding
 	}
@@ -1353,14 +2394,19 @@ type Alert struct {
 	Rule     string                 `protobuf:"bytes,2,opt,name=rule,proto3" json:"rule,omitempty"`
 	RaisedAt *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=raised_at,json=raisedAt,proto3" json:"raised_at,omitempty"`
 	// The finding the alert points at, with its url.
-	Finding       *Finding `protobuf:"bytes,4,opt,name=finding,proto3" json:"finding,omitempty"`
+	Finding *Finding `protobuf:"bytes,4,opt,name=finding,proto3" json:"finding,omitempty"`
+	// The number of the episode of the finding the alert belongs to
+	// (FPP-121-R02), and whether that episode is not the first, so the
+	// problem came back.
+	Episode       int32 `protobuf:"varint,5,opt,name=episode,proto3" json:"episode,omitempty"`
+	CameBack      bool  `protobuf:"varint,6,opt,name=came_back,json=cameBack,proto3" json:"came_back,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Alert) Reset() {
 	*x = Alert{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[11]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1372,7 +2418,7 @@ func (x *Alert) String() string {
 func (*Alert) ProtoMessage() {}
 
 func (x *Alert) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[11]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1385,7 +2431,7 @@ func (x *Alert) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Alert.ProtoReflect.Descriptor instead.
 func (*Alert) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{11}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *Alert) GetId() string {
@@ -1416,17 +2462,34 @@ func (x *Alert) GetFinding() *Finding {
 	return nil
 }
 
+func (x *Alert) GetEpisode() int32 {
+	if x != nil {
+		return x.Episode
+	}
+	return 0
+}
+
+func (x *Alert) GetCameBack() bool {
+	if x != nil {
+		return x.CameBack
+	}
+	return false
+}
+
 type ListAlertsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The page of the list asked for.
-	Page          *PageRequest `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
+	Page *PageRequest `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
+	// Only the alerts whose finding belongs to this env, folded to lower case.
+	// Empty for every env.
+	Env           string `protobuf:"bytes,2,opt,name=env,proto3" json:"env,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListAlertsRequest) Reset() {
 	*x = ListAlertsRequest{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[12]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1438,7 +2501,7 @@ func (x *ListAlertsRequest) String() string {
 func (*ListAlertsRequest) ProtoMessage() {}
 
 func (x *ListAlertsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[12]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1451,7 +2514,7 @@ func (x *ListAlertsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAlertsRequest.ProtoReflect.Descriptor instead.
 func (*ListAlertsRequest) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{12}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *ListAlertsRequest) GetPage() *PageRequest {
@@ -1461,19 +2524,28 @@ func (x *ListAlertsRequest) GetPage() *PageRequest {
 	return nil
 }
 
+func (x *ListAlertsRequest) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
 type ListAlertsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Every current alert, newest first.
 	Alerts []*Alert `protobuf:"bytes,1,rep,name=alerts,proto3" json:"alerts,omitempty"`
 	// Whether the list goes on after this page, and how to ask for the next.
-	Page          *PageResponse `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	Page *PageResponse `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	// The envs of the env list that raise alerts, in its order.
+	Envs          []string `protobuf:"bytes,3,rep,name=envs,proto3" json:"envs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListAlertsResponse) Reset() {
 	*x = ListAlertsResponse{}
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[13]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1485,7 +2557,7 @@ func (x *ListAlertsResponse) String() string {
 func (*ListAlertsResponse) ProtoMessage() {}
 
 func (x *ListAlertsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_flowrensic_v1_finding_proto_msgTypes[13]
+	mi := &file_flowrensic_v1_finding_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1498,7 +2570,7 @@ func (x *ListAlertsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListAlertsResponse.ProtoReflect.Descriptor instead.
 func (*ListAlertsResponse) Descriptor() ([]byte, []int) {
-	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{13}
+	return file_flowrensic_v1_finding_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *ListAlertsResponse) GetAlerts() []*Alert {
@@ -1515,11 +2587,18 @@ func (x *ListAlertsResponse) GetPage() *PageResponse {
 	return nil
 }
 
+func (x *ListAlertsResponse) GetEnvs() []string {
+	if x != nil {
+		return x.Envs
+	}
+	return nil
+}
+
 var File_flowrensic_v1_finding_proto protoreflect.FileDescriptor
 
 const file_flowrensic_v1_finding_proto_rawDesc = "" +
 	"\n" +
-	"\x1bflowrensic/v1/finding.proto\x12\rflowrensic.v1\x1a\x18flowrensic/v1/page.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc7\x01\n" +
+	"\x1bflowrensic/v1/finding.proto\x12\rflowrensic.v1\x1a\x18flowrensic/v1/page.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc6\x03\n" +
 	"\bEvidence\x12\x1b\n" +
 	"\tevent_seq\x18\x01 \x01(\x03R\beventSeq\x12\x12\n" +
 	"\x04note\x18\x02 \x01(\tR\x04note\x12\x15\n" +
@@ -1527,10 +2606,32 @@ const file_flowrensic_v1_finding_proto_rawDesc = "" +
 	"\x02at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x02at\x12\x1f\n" +
 	"\vworkflow_id\x18\x05 \x01(\tR\n" +
 	"workflowId\x12&\n" +
-	"\x0ftemporal_ui_url\x18\x06 \x01(\tR\rtemporalUiUrl\"\xb6\b\n" +
+	"\x0ftemporal_ui_url\x18\x06 \x01(\tR\rtemporalUiUrl\x12\x12\n" +
+	"\x04unit\x18\a \x01(\tR\x04unit\x12<\n" +
+	"\flast_seen_at\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"lastSeenAt\x129\n" +
+	"\n" +
+	"stopped_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tstoppedAt\x12\x1f\n" +
+	"\vstop_reason\x18\n" +
+	" \x01(\tR\n" +
+	"stopReason\x12\x12\n" +
+	"\x04rule\x18\v \x01(\tR\x04rule\x12!\n" +
+	"\frule_version\x18\f \x01(\tR\vruleVersion\x12\x18\n" +
+	"\aepisode\x18\r \x01(\x05R\aepisode\"\xaf\x02\n" +
+	"\x0eFindingEpisode\x12\x16\n" +
+	"\x06number\x18\x01 \x01(\x05R\x06number\x129\n" +
+	"\n" +
+	"started_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12<\n" +
+	"\flast_seen_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"lastSeenAt\x125\n" +
+	"\bended_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\aendedAt\x12\x1d\n" +
+	"\n" +
+	"end_reason\x18\x05 \x01(\tR\tendReason\x12\"\n" +
+	"\fobservations\x18\x06 \x01(\x05R\fobservations\x12\x12\n" +
+	"\x04kept\x18\a \x01(\x05R\x04kept\"\xc1\n" +
+	"\n" +
 	"\aFinding\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x15\n" +
-	"\x06run_id\x18\x02 \x01(\tR\x05runId\x121\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x121\n" +
 	"\x05class\x18\x03 \x01(\x0e2\x1b.flowrensic.v1.FindingClassR\x05class\x123\n" +
 	"\bseverity\x18\x04 \x01(\x0e2\x17.flowrensic.v1.SeverityR\bseverity\x12\x18\n" +
 	"\asummary\x18\x05 \x01(\tR\asummary\x12\x1a\n" +
@@ -1544,25 +2645,32 @@ const file_flowrensic_v1_finding_proto_rawDesc = "" +
 	"workflowId\x12#\n" +
 	"\rworkflow_type\x18\v \x01(\tR\fworkflowType\x12=\n" +
 	"\adetails\x18\f \x03(\v2#.flowrensic.v1.Finding.DetailsEntryR\adetails\x12\x10\n" +
-	"\x03url\x18\r \x01(\tR\x03url\x12\x1b\n" +
-	"\trun_count\x18\x0e \x01(\x05R\brunCount\x12<\n" +
-	"\ffirst_run_at\x18\x0f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"firstRunAt\x12:\n" +
-	"\vlast_run_at\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\tlastRunAt\x125\n" +
-	"\bended_at\x18\x11 \x01(\v2\x1a.google.protobuf.TimestampR\aendedAt\x124\n" +
+	"\x03url\x18\r \x01(\tR\x03url\x124\n" +
 	"\x06status\x18\x12 \x01(\x0e2\x1c.flowrensic.v1.FindingStatusR\x06status\x12;\n" +
-	"\varchived_at\x18\x13 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"archivedAt\x12;\n" +
 	"\vmistaken_at\x18\x14 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"mistakenAt\x12\x1f\n" +
 	"\vmistaken_by\x18\x15 \x01(\tR\n" +
 	"mistakenBy\x12&\n" +
-	"\x0ftemporal_ui_url\x18\x16 \x01(\tR\rtemporalUiUrl\x12+\n" +
-	"\x03tag\x18\x18 \x01(\x0e2\x19.flowrensic.v1.FindingTagR\x03tag\x1a:\n" +
+	"\x0ftemporal_ui_url\x18\x16 \x01(\tR\rtemporalUiUrl\x12:\n" +
+	"\vrule_status\x18\x19 \x01(\x0e2\x19.flowrensic.v1.RuleStatusR\n" +
+	"ruleStatus\x12\x1f\n" +
+	"\vreplaced_by\x18\x1a \x01(\tR\n" +
+	"replacedBy\x12!\n" +
+	"\frule_version\x18\x1c \x01(\tR\vruleVersion\x12\x19\n" +
+	"\bholds_by\x18\x1d \x01(\tR\aholdsBy\x127\n" +
+	"\aepisode\x18\x1e \x01(\v2\x1d.flowrensic.v1.FindingEpisodeR\aepisode\x12>\n" +
+	"\rfirst_seen_at\x18\x1f \x01(\v2\x1a.google.protobuf.TimestampR\vfirstSeenAt\x12<\n" +
+	"\flast_seen_at\x18  \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"lastSeenAt\x12\x10\n" +
+	"\x03env\x18! \x01(\tR\x03env\x12\x1c\n" +
+	"\tnamespace\x18\" \x01(\tR\tnamespace\x12\x18\n" +
+	"\asubject\x18# \x01(\tR\asubject\x12 \n" +
+	"\vfingerprint\x18$ \x01(\tR\vfingerprint\x12\x1a\n" +
+	"\bsilenced\x18% \x01(\bR\bsilenced\x1a:\n" +
 	"\fDetailsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01J\x04\b\x17\x10\x18R\n" +
-	"end_reason\"\xb0\x04\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01J\x04\b\x02\x10\x03J\x04\b\x0e\x10\x0fJ\x04\b\x0f\x10\x10J\x04\b\x10\x10\x11J\x04\b\x11\x10\x12J\x04\b\x13\x10\x14J\x04\b\x17\x10\x18J\x04\b\x18\x10\x19J\x04\b\x1b\x10\x1cR\x06run_idR\trun_countR\ffirst_run_atR\vlast_run_atR\bended_atR\varchived_atR\n" +
+	"end_reasonR\x03tagR\x04kind\"\xed\x04\n" +
 	"\x13ListFindingsRequest\x12\x15\n" +
 	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12\x1b\n" +
 	"\tdeploy_id\x18\x02 \x01(\tR\bdeployId\x123\n" +
@@ -1578,16 +2686,41 @@ const file_flowrensic_v1_finding_proto_rawDesc = "" +
 	"\vstored_only\x18\v \x01(\bR\n" +
 	"storedOnly\x124\n" +
 	"\x06status\x18\f \x01(\x0e2\x1c.flowrensic.v1.FindingStatusR\x06status\x12\x1a\n" +
-	"\bmistaken\x18\r \x01(\bR\bmistaken\x12+\n" +
-	"\x03tag\x18\x0e \x01(\x0e2\x19.flowrensic.v1.FindingTagR\x03tag\x12\x1f\n" +
+	"\bmistaken\x18\r \x01(\bR\bmistaken\x12\x1f\n" +
 	"\vworker_name\x18\x0f \x01(\tR\n" +
 	"workerName\x12.\n" +
-	"\x04page\x18\x10 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04pageJ\x04\b\x03\x10\x04J\x04\b\x04\x10\x05R\tpage_sizeR\n" +
-	"page_token\"\xa9\x01\n" +
+	"\x04page\x18\x10 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\x121\n" +
+	"\x05group\x18\x11 \x01(\x0e2\x1b.flowrensic.v1.FindingGroupR\x05group\x12\x1a\n" +
+	"\bsilenced\x18\x13 \x01(\bR\bsilencedJ\x04\b\x03\x10\x04J\x04\b\x04\x10\x05J\x04\b\x0e\x10\x0fJ\x04\b\x12\x10\x13R\tpage_sizeR\n" +
+	"page_tokenR\x03tagR\barchived\"\xa9\x01\n" +
 	"\x14ListFindingsResponse\x12\x15\n" +
 	"\x06run_id\x18\x01 \x01(\tR\x05runId\x122\n" +
 	"\bfindings\x18\x02 \x03(\v2\x16.flowrensic.v1.FindingR\bfindings\x12/\n" +
-	"\x04page\x18\x04 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04pageJ\x04\b\x03\x10\x04R\x0fnext_page_token\"\x17\n" +
+	"\x04page\x18\x04 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04pageJ\x04\b\x03\x10\x04R\x0fnext_page_token\"\xe0\x01\n" +
+	"\x19CountFindingGroupsRequest\x123\n" +
+	"\bseverity\x18\x01 \x01(\x0e2\x17.flowrensic.v1.SeverityR\bseverity\x12\x10\n" +
+	"\x03env\x18\x02 \x01(\tR\x03env\x124\n" +
+	"\x06status\x18\x03 \x01(\x0e2\x1c.flowrensic.v1.FindingStatusR\x06status\x12\x1a\n" +
+	"\bmistaken\x18\x04 \x01(\bR\bmistaken\x12\x1a\n" +
+	"\bsilenced\x18\x06 \x01(\bR\bsilencedJ\x04\b\x05\x10\x06R\barchived\"\xd6\x01\n" +
+	"\x11FindingGroupCount\x121\n" +
+	"\x05group\x18\x01 \x01(\x0e2\x1b.flowrensic.v1.FindingGroupR\x05group\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x125\n" +
+	"\aclasses\x18\x03 \x03(\x0e2\x1b.flowrensic.v1.FindingClassR\aclasses\x12\x14\n" +
+	"\x05count\x18\x04 \x01(\x05R\x05count\x12-\n" +
+	"\x05worst\x18\x05 \x01(\x0e2\x17.flowrensic.v1.SeverityR\x05worst\"\x9b\x01\n" +
+	"\x1aCountFindingGroupsResponse\x12\x14\n" +
+	"\x05total\x18\x01 \x01(\x05R\x05total\x12-\n" +
+	"\x05worst\x18\x02 \x01(\x0e2\x17.flowrensic.v1.SeverityR\x05worst\x128\n" +
+	"\x06groups\x18\x03 \x03(\v2 .flowrensic.v1.FindingGroupCountR\x06groups\"g\n" +
+	"\x15ExportFindingsRequest\x126\n" +
+	"\x04list\x18\x01 \x01(\v2\".flowrensic.v1.ListFindingsRequestR\x04list\x12\x16\n" +
+	"\x06format\x18\x02 \x01(\tR\x06format\"\x84\x01\n" +
+	"\x16ExportFindingsResponse\x12\x1a\n" +
+	"\bdocument\x18\x01 \x01(\tR\bdocument\x12/\n" +
+	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\x12\x1d\n" +
+	"\n" +
+	"schema_url\x18\x03 \x01(\tR\tschemaUrl\"\x17\n" +
 	"\x15ListThresholdsRequest\"\xa0\x01\n" +
 	"\tThreshold\x12!\n" +
 	"\fenv_variable\x18\x01 \x01(\tR\venvVariable\x125\n" +
@@ -1605,103 +2738,150 @@ const file_flowrensic_v1_finding_proto_rawDesc = "" +
 	"\truns_page\x18\x03 \x01(\v2\x1a.flowrensic.v1.PageRequestR\brunsPage\"\x80\x01\n" +
 	"\x12GetFindingResponse\x120\n" +
 	"\afinding\x18\x01 \x01(\v2\x16.flowrensic.v1.FindingR\afinding\x128\n" +
-	"\truns_page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\brunsPage\"_\n" +
-	"\x17SetFindingStatusRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x124\n" +
-	"\x06status\x18\x02 \x01(\x0e2\x1c.flowrensic.v1.FindingStatusR\x06status\"L\n" +
-	"\x18SetFindingStatusResponse\x120\n" +
-	"\afinding\x18\x01 \x01(\v2\x16.flowrensic.v1.FindingR\afinding\"\x96\x01\n" +
+	"\truns_page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\brunsPage\"k\n" +
+	"\x1aListFindingEpisodesRequest\x12\x1d\n" +
+	"\n" +
+	"finding_id\x18\x01 \x01(\tR\tfindingId\x12.\n" +
+	"\x04page\x18\x02 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\x89\x01\n" +
+	"\x1bListFindingEpisodesResponse\x129\n" +
+	"\bepisodes\x18\x01 \x03(\v2\x1d.flowrensic.v1.FindingEpisodeR\bepisodes\x12/\n" +
+	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\"\x89\x01\n" +
+	"\x1eListFindingObservationsRequest\x12\x1d\n" +
+	"\n" +
+	"finding_id\x18\x01 \x01(\tR\tfindingId\x12\x18\n" +
+	"\aepisode\x18\x02 \x01(\x05R\aepisode\x12.\n" +
+	"\x04page\x18\x03 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\x8f\x01\n" +
+	"\x1fListFindingObservationsResponse\x12;\n" +
+	"\fobservations\x18\x01 \x03(\v2\x17.flowrensic.v1.EvidenceR\fobservations\x12/\n" +
+	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\"=\n" +
+	"\x15SilenceFindingRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05exact\x18\x02 \x01(\bR\x05exact\"J\n" +
+	"\x16SilenceFindingResponse\x120\n" +
+	"\afinding\x18\x01 \x01(\v2\x16.flowrensic.v1.FindingR\afinding\")\n" +
+	"\x17UnsilenceFindingRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"L\n" +
+	"\x18UnsilenceFindingResponse\x120\n" +
+	"\afinding\x18\x01 \x01(\v2\x16.flowrensic.v1.FindingR\afinding\"\xcd\x01\n" +
 	"\x05Alert\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04rule\x18\x02 \x01(\tR\x04rule\x127\n" +
 	"\traised_at\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\braisedAt\x120\n" +
-	"\afinding\x18\x04 \x01(\v2\x16.flowrensic.v1.FindingR\afinding\"C\n" +
+	"\afinding\x18\x04 \x01(\v2\x16.flowrensic.v1.FindingR\afinding\x12\x18\n" +
+	"\aepisode\x18\x05 \x01(\x05R\aepisode\x12\x1b\n" +
+	"\tcame_back\x18\x06 \x01(\bR\bcameBack\"U\n" +
 	"\x11ListAlertsRequest\x12.\n" +
-	"\x04page\x18\x01 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"s\n" +
+	"\x04page\x18\x01 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\x12\x10\n" +
+	"\x03env\x18\x02 \x01(\tR\x03env\"\x87\x01\n" +
 	"\x12ListAlertsResponse\x12,\n" +
 	"\x06alerts\x18\x01 \x03(\v2\x14.flowrensic.v1.AlertR\x06alerts\x12/\n" +
-	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page*\x8e\x14\n" +
+	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\x12\x12\n" +
+	"\x04envs\x18\x03 \x03(\tR\x04envs*\x9c#\n" +
 	"\fFindingClass\x12\x1d\n" +
-	"\x19FINDING_CLASS_UNSPECIFIED\x10\x00\x12\x18\n" +
-	"\x14FINDING_CLASS_WEDGED\x10\x01\x12\"\n" +
-	"\x1eFINDING_CLASS_DANGLING_HANDLER\x10\x02\x12\x1c\n" +
-	"\x18FINDING_CLASS_STUCK_LOOP\x10\x03\x12\x1f\n" +
-	"\x1bFINDING_CLASS_HISTORY_BLOAT\x10\x04\x12#\n" +
-	"\x1fFINDING_CLASS_ORPHANED_ACTIVITY\x10\x05\x12%\n" +
-	"!FINDING_CLASS_INITIALIZATION_RACE\x10\x06\x12+\n" +
-	"'FINDING_CLASS_INVALID_STATE_COMBINATION\x10\a\x12!\n" +
-	"\x1dFINDING_CLASS_TWO_STORE_DRIFT\x10\b\x12*\n" +
-	"&FINDING_CLASS_TIMEOUT_MISCONFIGURATION\x10\t\x12\"\n" +
-	"\x1eFINDING_CLASS_OVERLAP_TOO_LONG\x10\n" +
-	"\x12#\n" +
-	"\x1fFINDING_CLASS_DECLARED_NOT_DONE\x10\v\x12,\n" +
-	"(FINDING_CLASS_OLD_VERSION_DURING_ROLLOUT\x10\f\x12(\n" +
-	"$FINDING_CLASS_RETRY_MISCONFIGURATION\x10\r\x12!\n" +
-	"\x1dFINDING_CLASS_REFUSED_UPDATES\x10\x0e\x12\x1a\n" +
-	"\x16FINDING_CLASS_PULL_GAP\x10\x0f\x12&\n" +
-	"\"FINDING_CLASS_STOPPED_AFTER_DEPLOY\x10\x10\x12\x1c\n" +
-	"\x18FINDING_CLASS_FAILED_RUN\x10\x12\x12$\n" +
-	" FINDING_CLASS_SERVER_METRICS_GAP\x10\x13\x12&\n" +
-	"\"FINDING_CLASS_WORKER_SLOTS_USED_UP\x10\x15\x12(\n" +
-	"$FINDING_CLASS_STICKY_CACHE_TOO_SMALL\x10\x16\x12$\n" +
-	" FINDING_CLASS_SLOW_WORKFLOW_TASK\x10\x17\x12\x1d\n" +
-	"\x19FINDING_CLASS_LONG_REPLAY\x10\x18\x12\"\n" +
-	"\x1eFINDING_CLASS_ACTIVITY_FAILING\x10\x19\x12\x1f\n" +
-	"\x1bFINDING_CLASS_ACTIVITY_SLOW\x10\x1a\x12 \n" +
-	"\x1cFINDING_CLASS_WORKER_POLLERS\x10\x1b\x12,\n" +
-	"(FINDING_CLASS_WORKER_CANNOT_REACH_SERVER\x10\x1c\x12,\n" +
-	"(FINDING_CLASS_SCHEDULE_TO_START_INCREASE\x10\x1d\x12!\n" +
-	"\x1dFINDING_CLASS_BACKLOG_GROWING\x10\x1e\x12\x1c\n" +
-	"\x18FINDING_CLASS_NO_POLLERS\x10\x1f\x12(\n" +
-	"$FINDING_CLASS_HIGH_SCHEDULE_TO_START\x10 \x12 \n" +
-	"\x1cFINDING_CLASS_LOW_SYNC_MATCH\x10!\x12$\n" +
-	" FINDING_CLASS_RESOURCE_EXHAUSTED\x10\"\x12#\n" +
-	"\x1fFINDING_CLASS_TEMPORAL_DATABASE\x10#\x12(\n" +
-	"$FINDING_CLASS_WORKFLOW_TASK_FAILURES\x10$\x12*\n" +
-	"&FINDING_CLASS_ACTIVITY_TIMEOUTS_RISING\x10%\x12#\n" +
-	"\x1fFINDING_CLASS_HISTORY_TOO_LARGE\x10&\x12)\n" +
-	"%FINDING_CLASS_HISTORY_SERVICE_TROUBLE\x10'\x12#\n" +
-	"\x1fFINDING_CLASS_ACTIVITY_ATTEMPTS\x10(\x12\x1f\n" +
-	"\x1bFINDING_CLASS_ERROR_RETRIES\x10)\x121\n" +
-	"-FINDING_CLASS_LONG_ACTIVITY_WITHOUT_HEARTBEAT\x10*\x12\x1f\n" +
-	"\x1bFINDING_CLASS_LOST_ATTEMPTS\x10+\x12$\n" +
-	" FINDING_CLASS_UNHANDLED_MESSAGES\x10,\x12(\n" +
-	"$FINDING_CLASS_WORKER_RECORDS_DROPPED\x10-\x12&\n" +
+	"\x19FINDING_CLASS_UNSPECIFIED\x10\x00\x12#\n" +
+	"\x1fFINDING_CLASS_RUN_STUCK_FAILING\x10\x01\x12*\n" +
+	"&FINDING_CLASS_HANDLER_RUNNING_AT_CLOSE\x10\x02\x12#\n" +
+	"\x1fFINDING_CLASS_RUN_STUCK_IN_LOOP\x10\x03\x121\n" +
+	"-FINDING_CLASS_RUN_CLOSED_WITH_ACTIVITIES_OPEN\x10\x05\x12*\n" +
+	"&FINDING_CLASS_HANDLER_RAN_BEFORE_SETUP\x10\x06\x12&\n" +
+	"\"FINDING_CLASS_RUN_STATE_IMPOSSIBLE\x10\a\x12*\n" +
+	"&FINDING_CLASS_RUN_DISAGREES_WITH_STORE\x10\b\x12)\n" +
+	"%FINDING_CLASS_DEPLOY_OVERLAP_TOO_LONG\x10\n" +
+	"\x12&\n" +
+	"\"FINDING_CLASS_DEPLOY_STAGE_MISSING\x10\v\x12+\n" +
+	"'FINDING_CLASS_DEPLOY_RUN_ON_OLD_VERSION\x10\f\x12/\n" +
+	"+FINDING_CLASS_ACTIVITY_RETRY_LIMIT_TOO_HIGH\x10\r\x12&\n" +
+	"\"FINDING_CLASS_RUN_REFUSING_UPDATES\x10\x0e\x12&\n" +
+	"\"FINDING_CLASS_NAMESPACE_NOT_PULLED\x10\x0f\x12&\n" +
+	"\"FINDING_CLASS_DEPLOY_FIXED_PROBLEM\x10\x10\x12&\n" +
+	"\"FINDING_CLASS_RUN_CLOSED_AS_FAILED\x10\x12\x12+\n" +
+	"'FINDING_CLASS_ENGINE_METRICS_NEVER_SENT\x10\x13\x12&\n" +
+	"\"FINDING_CLASS_WORKER_SLOTS_USED_UP\x10\x15\x12/\n" +
+	"+FINDING_CLASS_WORKER_STICKY_CACHE_TOO_SMALL\x10\x16\x12,\n" +
+	"(FINDING_CLASS_WORKER_WORKFLOW_TASKS_SLOW\x10\x17\x12$\n" +
+	" FINDING_CLASS_WORKER_REPLAY_SLOW\x10\x18\x12\"\n" +
+	"\x1eFINDING_CLASS_ACTIVITY_FAILING\x10\x19\x12,\n" +
+	"(FINDING_CLASS_WORKER_CANNOT_REACH_ENGINE\x10\x1c\x12,\n" +
+	"(FINDING_CLASS_TASK_QUEUE_WITHOUT_POLLERS\x10\x1f\x12+\n" +
+	"'FINDING_CLASS_TASK_QUEUE_FALLING_BEHIND\x10 \x127\n" +
+	"3FINDING_CLASS_TASK_QUEUE_TASKS_NOT_MATCHED_DIRECTLY\x10!\x12)\n" +
+	"%FINDING_CLASS_ACTIVITY_RETRIES_RISING\x10(\x120\n" +
+	",FINDING_CLASS_ACTIVITY_RETRIES_NEVER_SUCCEED\x10)\x124\n" +
+	"0FINDING_CLASS_ACTIVITY_HEARTBEAT_TIMEOUT_MISSING\x10*\x12(\n" +
+	"$FINDING_CLASS_RUN_MESSAGES_UNHANDLED\x10,\x12(\n" +
+	"$FINDING_CLASS_WORKER_REPORTS_DROPPED\x10-\x12&\n" +
 	"\"FINDING_CLASS_NAMESPACE_NEAR_LIMIT\x10.\x12%\n" +
-	"!FINDING_CLASS_NAMESPACE_THROTTLED\x10/\x12(\n" +
-	"$FINDING_CLASS_ENGINE_METRICS_MISSING\x100\x12\x1e\n" +
-	"\x1aFINDING_CLASS_DATA_STOPPED\x101\x12'\n" +
-	"#FINDING_CLASS_ACTIVITY_NEAR_TIMEOUT\x102\x12$\n" +
-	" FINDING_CLASS_ACTIVITY_TIMED_OUT\x103\x12 \n" +
-	"\x1cFINDING_CLASS_ENGINE_REFUSED\x104\x12$\n" +
-	" FINDING_CLASS_ENGINE_UNREACHABLE\x105\x12&\n" +
-	"\"FINDING_CLASS_WORKER_CALLS_REFUSED\x106\x12%\n" +
+	"!FINDING_CLASS_NAMESPACE_THROTTLED\x10/\x12+\n" +
+	"'FINDING_CLASS_ENGINE_METRICS_NOT_SET_UP\x100\x12'\n" +
+	"#FINDING_CLASS_ACTIVITY_NEAR_TIMEOUT\x102\x12+\n" +
+	"'FINDING_CLASS_ENGINE_REFUSES_FLOWRENSIC\x104\x12$\n" +
+	" FINDING_CLASS_ENGINE_UNREACHABLE\x105\x12(\n" +
+	"$FINDING_CLASS_WORKER_REPORTS_REFUSED\x106\x12%\n" +
 	"!FINDING_CLASS_NAMESPACE_NOT_FOUND\x107\x12'\n" +
-	"#FINDING_CLASS_ENV_WITHOUT_NAMESPACE\x108\x12&\n" +
-	"\"FINDING_CLASS_E2E_WITH_OLD_WORKERS\x10:\x12#\n" +
-	"\x1fFINDING_CLASS_E2E_ATTEMPTS_LOST\x10;\x12\x1b\n" +
-	"\x17FINDING_CLASS_FORGOTTEN\x10<\x12*\n" +
-	"&FINDING_CLASS_REPLAY_INTERCEPTOR_DRIFT\x10=\x12&\n" +
-	"\"FINDING_CLASS_INTERCEPTORS_CHANGED\x10>\x12\x1c\n" +
-	"\x18FINDING_CLASS_JOB_BEHIND\x10?\x12\x1a\n" +
-	"\x16FINDING_CLASS_JOB_LATE\x10@\x12\x1c\n" +
-	"\x18FINDING_CLASS_OVER_LIMIT\x10B\x12%\n" +
-	"!FINDING_CLASS_JOB_BACKLOG_GROWING\x10C\"\x04\b\x11\x10\x11\"\x04\b\x14\x10\x14\"\x04\b9\x109\"\x04\bA\x10A*%FINDING_CLASS_DEPLOYED_WITHOUT_REPLAY*\"FINDING_CLASS_DEPLOY_REPLAY_FAILED*\"FINDING_CLASS_UNKNOWN_NAMESPACE_ID* FINDING_CLASS_SIZE_LIMIT_STOPPED*`\n" +
-	"\n" +
-	"FindingTag\x12\x1b\n" +
-	"\x17FINDING_TAG_UNSPECIFIED\x10\x00\x12\x19\n" +
-	"\x15FINDING_TAG_WORKFLOWS\x10\x01\x12\x1a\n" +
-	"\x16FINDING_TAG_FLOWRENSIC\x10\x02*d\n" +
+	"#FINDING_CLASS_ENV_WITHOUT_NAMESPACE\x108\x12,\n" +
+	"(FINDING_CLASS_DEPLOY_E2E_MET_OLD_WORKERS\x10:\x12*\n" +
+	"&FINDING_CLASS_DEPLOY_E2E_LOST_ATTEMPTS\x10;\x12%\n" +
+	"!FINDING_CLASS_RUN_STUCK_FORGOTTEN\x10<\x12,\n" +
+	"(FINDING_CLASS_REPLAY_INTERCEPTORS_DIFFER\x10=\x125\n" +
+	"1FINDING_CLASS_INTERCEPTORS_CHANGED_WITH_RUNS_OPEN\x10>\x12'\n" +
+	"#FINDING_CLASS_FLOWRENSIC_JOB_BEHIND\x10?\x12(\n" +
+	"$FINDING_CLASS_FLOWRENSIC_JOB_STOPPED\x10@\x120\n" +
+	",FINDING_CLASS_FLOWRENSIC_JOB_BACKLOG_GROWING\x10C\x12+\n" +
+	"'FINDING_CLASS_STORED_HISTORY_UNREADABLE\x10D\x12+\n" +
+	"'FINDING_CLASS_WORKER_SDK_VERSIONS_MIXED\x10E\x12*\n" +
+	"&FINDING_CLASS_WORKER_REPORTS_TOO_LARGE\x10F\x12\"\n" +
+	"\x1eFINDING_CLASS_HISTORY_TOO_LONG\x10G\x12+\n" +
+	"'FINDING_CLASS_HISTORY_STORAGE_TOO_LARGE\x10H\x12.\n" +
+	"*FINDING_CLASS_INDIVIDUAL_PAYLOAD_TOO_LARGE\x10I\x12#\n" +
+	"\x1fFINDING_CLASS_RUN_STUCK_WAITING\x10J\x12)\n" +
+	"%FINDING_CLASS_WORKER_POLLERS_TOO_MANY\x10L\x12(\n" +
+	"$FINDING_CLASS_WORKER_POLLERS_TOO_FEW\x10M\x12,\n" +
+	"(FINDING_CLASS_ACTIVITY_TIMEOUT_TOO_SHORT\x10N\x12+\n" +
+	"'FINDING_CLASS_ACTIVITY_TIMEOUT_TOO_LONG\x10O\x127\n" +
+	"3FINDING_CLASS_ACTIVITY_TIMED_OUT_WAITING_FOR_WORKER\x10P\x126\n" +
+	"2FINDING_CLASS_ACTIVITY_TIMED_OUT_MISSING_HEARTBEAT\x10Q\x125\n" +
+	"1FINDING_CLASS_ACTIVITY_TIMED_OUT_RUNNING_TOO_LONG\x10R\x12&\n" +
+	"\"FINDING_CLASS_ENGINE_SHARDS_MOVING\x10S\x12)\n" +
+	"%FINDING_CLASS_ENGINE_RETURNING_ERRORS\x10T\x12#\n" +
+	"\x1fFINDING_CLASS_ENGINE_CALLS_SLOW\x10U\x12,\n" +
+	"(FINDING_CLASS_FLOWRENSIC_SERVER_CPU_HIGH\x10V\x12/\n" +
+	"+FINDING_CLASS_FLOWRENSIC_SERVER_MEMORY_HIGH\x10W\x12.\n" +
+	"*FINDING_CLASS_FLOWRENSIC_DB_POOL_EXHAUSTED\x10X\x12)\n" +
+	"%FINDING_CLASS_FLOWRENSIC_REQUESTS_LAG\x10Y\x12-\n" +
+	")FINDING_CLASS_NAMESPACE_RESOURCE_TOO_BUSY\x10Z\x12)\n" +
+	"%FINDING_CLASS_ENGINE_DATABASE_FAILING\x10[\x12&\n" +
+	"\"FINDING_CLASS_ENGINE_DATABASE_SLOW\x10\\\x12-\n" +
+	")FINDING_CLASS_DATA_STOPPED_ENGINE_METRICS\x10]\x12(\n" +
+	"$FINDING_CLASS_DATA_STOPPED_HISTORIES\x10^\x12-\n" +
+	")FINDING_CLASS_DATA_STOPPED_WORKER_METRICS\x10_\x12.\n" +
+	"*FINDING_CLASS_DATA_STOPPED_ACTIVITY_EVENTS\x10`\x12$\n" +
+	" FINDING_CLASS_WORKER_WENT_SILENT\x10a\x12-\n" +
+	")FINDING_CLASS_NAMESPACE_NEAR_POLLER_LIMIT\x10b\x12:\n" +
+	"6FINDING_CLASS_WORKFLOW_TASK_TIMED_OUT_RUNNING_TOO_LONG\x10c\x12<\n" +
+	"8FINDING_CLASS_WORKFLOW_TASK_TIMED_OUT_WAITING_FOR_WORKER\x10d\"\x04\b\x04\x10\x04\"\x04\b\t\x10\t\"\x04\b\x11\x10\x11\"\x04\b\x14\x10\x14\"\x04\b\x1a\x10\x1a\"\x04\b\x1b\x10\x1b\"\x04\b\x1d\x10\x1d\"\x04\b\x1e\x10\x1e\"\x04\b\"\x10\"\"\x04\b#\x10#\"\x04\b$\x10$\"\x04\b%\x10%\"\x04\b&\x10&\"\x04\b'\x10'\"\x04\b+\x10+\"\x04\b1\x101\"\x04\b3\x103\"\x04\b9\x109\"\x04\bA\x10A\"\x04\bB\x10B\"\x04\bK\x10K*\x1bFINDING_CLASS_HISTORY_BLOAT*&FINDING_CLASS_TIMEOUT_MISCONFIGURATION*%FINDING_CLASS_DEPLOYED_WITHOUT_REPLAY*\"FINDING_CLASS_DEPLOY_REPLAY_FAILED*)FINDING_CLASS_ACTIVITY_OFTEN_NEAR_TIMEOUT*\x1cFINDING_CLASS_WORKER_POLLERS*%FINDING_CLASS_TASK_QUEUE_WAIT_GROWING*(FINDING_CLASS_TASK_QUEUE_BACKLOG_GROWING*&FINDING_CLASS_TASK_QUEUE_WAIT_TOO_LONG*'FINDING_CLASS_ENGINE_CALLS_RATE_LIMITED*-FINDING_CLASS_ENGINE_DATABASE_SLOW_OR_FAILING*$FINDING_CLASS_WORKFLOW_TASK_FAILURES*&FINDING_CLASS_ACTIVITY_TIMEOUTS_RISING*\x1fFINDING_CLASS_HISTORY_TOO_LARGE*%FINDING_CLASS_HISTORY_SERVICE_TROUBLE*$FINDING_CLASS_ACTIVITY_ATTEMPTS_LOST*#FINDING_CLASS_DATA_STOPPED_ARRIVING* FINDING_CLASS_ACTIVITY_TIMED_OUT*\"FINDING_CLASS_UNKNOWN_NAMESPACE_ID* FINDING_CLASS_SIZE_LIMIT_STOPPED*\x18FINDING_CLASS_OVER_LIMIT*%FINDING_CLASS_WORKFLOW_TASK_TIMED_OUT*\x9e\x01\n" +
+	"\fFindingGroup\x12\x1d\n" +
+	"\x19FINDING_GROUP_UNSPECIFIED\x10\x00\x12\x1b\n" +
+	"\x17FINDING_GROUP_WORKFLOWS\x10\x01\x12\x19\n" +
+	"\x15FINDING_GROUP_WORKERS\x10\x02\x12\x19\n" +
+	"\x15FINDING_GROUP_DEPLOYS\x10\x03\x12\x1c\n" +
+	"\x18FINDING_GROUP_FLOWRENSIC\x10\x04*d\n" +
 	"\bSeverity\x12\x18\n" +
 	"\x14SEVERITY_UNSPECIFIED\x10\x00\x12\x11\n" +
 	"\rSEVERITY_INFO\x10\x01\x12\x14\n" +
 	"\x10SEVERITY_WARNING\x10\x02\x12\x15\n" +
-	"\x11SEVERITY_CRITICAL\x10\x03*g\n" +
+	"\x11SEVERITY_CRITICAL\x10\x03*\x94\x01\n" +
+	"\n" +
+	"RuleStatus\x12\x1b\n" +
+	"\x17RULE_STATUS_UNSPECIFIED\x10\x00\x12\x16\n" +
+	"\x12RULE_STATUS_ACTIVE\x10\x01\x12\x1a\n" +
+	"\x16RULE_STATUS_DEPRECATED\x10\x02\x12\x17\n" +
+	"\x13RULE_STATUS_RETIRED\x10\x03\x12\x1c\n" +
+	"\x18RULE_STATUS_EXPERIMENTAL\x10\x04*\x83\x01\n" +
 	"\rFindingStatus\x12\x1e\n" +
 	"\x1aFINDING_STATUS_UNSPECIFIED\x10\x00\x12\x19\n" +
-	"\x15FINDING_STATUS_ACTIVE\x10\x01\x12\x1b\n" +
-	"\x17FINDING_STATUS_ARCHIVED\x10\x02B\xb5\x01\n" +
-	"\x11com.flowrensic.v1B\fFindingProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x15FINDING_STATUS_ACTIVE\x10\x01\x12\x18\n" +
+	"\x14FINDING_STATUS_QUIET\x10\x03\"\x04\b\x02\x10\x02*\x17FINDING_STATUS_ARCHIVEDB\xcc\x01\n" +
+	"\x11com.flowrensic.v1B\fFindingProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_finding_proto_rawDescOnce sync.Once
@@ -1715,70 +2895,102 @@ func file_flowrensic_v1_finding_proto_rawDescGZIP() []byte {
 	return file_flowrensic_v1_finding_proto_rawDescData
 }
 
-var file_flowrensic_v1_finding_proto_enumTypes = make([]protoimpl.EnumInfo, 4)
-var file_flowrensic_v1_finding_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_flowrensic_v1_finding_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_flowrensic_v1_finding_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
 var file_flowrensic_v1_finding_proto_goTypes = []any{
-	(FindingClass)(0),                // 0: flowrensic.v1.FindingClass
-	(FindingTag)(0),                  // 1: flowrensic.v1.FindingTag
-	(Severity)(0),                    // 2: flowrensic.v1.Severity
-	(FindingStatus)(0),               // 3: flowrensic.v1.FindingStatus
-	(*Evidence)(nil),                 // 4: flowrensic.v1.Evidence
-	(*Finding)(nil),                  // 5: flowrensic.v1.Finding
-	(*ListFindingsRequest)(nil),      // 6: flowrensic.v1.ListFindingsRequest
-	(*ListFindingsResponse)(nil),     // 7: flowrensic.v1.ListFindingsResponse
-	(*ListThresholdsRequest)(nil),    // 8: flowrensic.v1.ListThresholdsRequest
-	(*Threshold)(nil),                // 9: flowrensic.v1.Threshold
-	(*ListThresholdsResponse)(nil),   // 10: flowrensic.v1.ListThresholdsResponse
-	(*GetFindingRequest)(nil),        // 11: flowrensic.v1.GetFindingRequest
-	(*GetFindingResponse)(nil),       // 12: flowrensic.v1.GetFindingResponse
-	(*SetFindingStatusRequest)(nil),  // 13: flowrensic.v1.SetFindingStatusRequest
-	(*SetFindingStatusResponse)(nil), // 14: flowrensic.v1.SetFindingStatusResponse
-	(*Alert)(nil),                    // 15: flowrensic.v1.Alert
-	(*ListAlertsRequest)(nil),        // 16: flowrensic.v1.ListAlertsRequest
-	(*ListAlertsResponse)(nil),       // 17: flowrensic.v1.ListAlertsResponse
-	nil,                              // 18: flowrensic.v1.Finding.DetailsEntry
-	(*timestamppb.Timestamp)(nil),    // 19: google.protobuf.Timestamp
-	(*PageRequest)(nil),              // 20: flowrensic.v1.PageRequest
-	(*PageResponse)(nil),             // 21: flowrensic.v1.PageResponse
+	(FindingClass)(0),                       // 0: flowrensic.v1.FindingClass
+	(FindingGroup)(0),                       // 1: flowrensic.v1.FindingGroup
+	(Severity)(0),                           // 2: flowrensic.v1.Severity
+	(RuleStatus)(0),                         // 3: flowrensic.v1.RuleStatus
+	(FindingStatus)(0),                      // 4: flowrensic.v1.FindingStatus
+	(*Evidence)(nil),                        // 5: flowrensic.v1.Evidence
+	(*FindingEpisode)(nil),                  // 6: flowrensic.v1.FindingEpisode
+	(*Finding)(nil),                         // 7: flowrensic.v1.Finding
+	(*ListFindingsRequest)(nil),             // 8: flowrensic.v1.ListFindingsRequest
+	(*ListFindingsResponse)(nil),            // 9: flowrensic.v1.ListFindingsResponse
+	(*CountFindingGroupsRequest)(nil),       // 10: flowrensic.v1.CountFindingGroupsRequest
+	(*FindingGroupCount)(nil),               // 11: flowrensic.v1.FindingGroupCount
+	(*CountFindingGroupsResponse)(nil),      // 12: flowrensic.v1.CountFindingGroupsResponse
+	(*ExportFindingsRequest)(nil),           // 13: flowrensic.v1.ExportFindingsRequest
+	(*ExportFindingsResponse)(nil),          // 14: flowrensic.v1.ExportFindingsResponse
+	(*ListThresholdsRequest)(nil),           // 15: flowrensic.v1.ListThresholdsRequest
+	(*Threshold)(nil),                       // 16: flowrensic.v1.Threshold
+	(*ListThresholdsResponse)(nil),          // 17: flowrensic.v1.ListThresholdsResponse
+	(*GetFindingRequest)(nil),               // 18: flowrensic.v1.GetFindingRequest
+	(*GetFindingResponse)(nil),              // 19: flowrensic.v1.GetFindingResponse
+	(*ListFindingEpisodesRequest)(nil),      // 20: flowrensic.v1.ListFindingEpisodesRequest
+	(*ListFindingEpisodesResponse)(nil),     // 21: flowrensic.v1.ListFindingEpisodesResponse
+	(*ListFindingObservationsRequest)(nil),  // 22: flowrensic.v1.ListFindingObservationsRequest
+	(*ListFindingObservationsResponse)(nil), // 23: flowrensic.v1.ListFindingObservationsResponse
+	(*SilenceFindingRequest)(nil),           // 24: flowrensic.v1.SilenceFindingRequest
+	(*SilenceFindingResponse)(nil),          // 25: flowrensic.v1.SilenceFindingResponse
+	(*UnsilenceFindingRequest)(nil),         // 26: flowrensic.v1.UnsilenceFindingRequest
+	(*UnsilenceFindingResponse)(nil),        // 27: flowrensic.v1.UnsilenceFindingResponse
+	(*Alert)(nil),                           // 28: flowrensic.v1.Alert
+	(*ListAlertsRequest)(nil),               // 29: flowrensic.v1.ListAlertsRequest
+	(*ListAlertsResponse)(nil),              // 30: flowrensic.v1.ListAlertsResponse
+	nil,                                     // 31: flowrensic.v1.Finding.DetailsEntry
+	(*timestamppb.Timestamp)(nil),           // 32: google.protobuf.Timestamp
+	(*PageRequest)(nil),                     // 33: flowrensic.v1.PageRequest
+	(*PageResponse)(nil),                    // 34: flowrensic.v1.PageResponse
 }
 var file_flowrensic_v1_finding_proto_depIdxs = []int32{
-	19, // 0: flowrensic.v1.Evidence.at:type_name -> google.protobuf.Timestamp
-	0,  // 1: flowrensic.v1.Finding.class:type_name -> flowrensic.v1.FindingClass
-	2,  // 2: flowrensic.v1.Finding.severity:type_name -> flowrensic.v1.Severity
-	4,  // 3: flowrensic.v1.Finding.evidence:type_name -> flowrensic.v1.Evidence
-	19, // 4: flowrensic.v1.Finding.detected_at:type_name -> google.protobuf.Timestamp
-	18, // 5: flowrensic.v1.Finding.details:type_name -> flowrensic.v1.Finding.DetailsEntry
-	19, // 6: flowrensic.v1.Finding.first_run_at:type_name -> google.protobuf.Timestamp
-	19, // 7: flowrensic.v1.Finding.last_run_at:type_name -> google.protobuf.Timestamp
-	19, // 8: flowrensic.v1.Finding.ended_at:type_name -> google.protobuf.Timestamp
-	3,  // 9: flowrensic.v1.Finding.status:type_name -> flowrensic.v1.FindingStatus
-	19, // 10: flowrensic.v1.Finding.archived_at:type_name -> google.protobuf.Timestamp
-	19, // 11: flowrensic.v1.Finding.mistaken_at:type_name -> google.protobuf.Timestamp
-	1,  // 12: flowrensic.v1.Finding.tag:type_name -> flowrensic.v1.FindingTag
-	2,  // 13: flowrensic.v1.ListFindingsRequest.severity:type_name -> flowrensic.v1.Severity
-	0,  // 14: flowrensic.v1.ListFindingsRequest.class:type_name -> flowrensic.v1.FindingClass
-	3,  // 15: flowrensic.v1.ListFindingsRequest.status:type_name -> flowrensic.v1.FindingStatus
-	1,  // 16: flowrensic.v1.ListFindingsRequest.tag:type_name -> flowrensic.v1.FindingTag
-	20, // 17: flowrensic.v1.ListFindingsRequest.page:type_name -> flowrensic.v1.PageRequest
-	5,  // 18: flowrensic.v1.ListFindingsResponse.findings:type_name -> flowrensic.v1.Finding
-	21, // 19: flowrensic.v1.ListFindingsResponse.page:type_name -> flowrensic.v1.PageResponse
-	0,  // 20: flowrensic.v1.Threshold.classes:type_name -> flowrensic.v1.FindingClass
-	9,  // 21: flowrensic.v1.ListThresholdsResponse.thresholds:type_name -> flowrensic.v1.Threshold
-	20, // 22: flowrensic.v1.GetFindingRequest.runs_page:type_name -> flowrensic.v1.PageRequest
-	5,  // 23: flowrensic.v1.GetFindingResponse.finding:type_name -> flowrensic.v1.Finding
-	21, // 24: flowrensic.v1.GetFindingResponse.runs_page:type_name -> flowrensic.v1.PageResponse
-	3,  // 25: flowrensic.v1.SetFindingStatusRequest.status:type_name -> flowrensic.v1.FindingStatus
-	5,  // 26: flowrensic.v1.SetFindingStatusResponse.finding:type_name -> flowrensic.v1.Finding
-	19, // 27: flowrensic.v1.Alert.raised_at:type_name -> google.protobuf.Timestamp
-	5,  // 28: flowrensic.v1.Alert.finding:type_name -> flowrensic.v1.Finding
-	20, // 29: flowrensic.v1.ListAlertsRequest.page:type_name -> flowrensic.v1.PageRequest
-	15, // 30: flowrensic.v1.ListAlertsResponse.alerts:type_name -> flowrensic.v1.Alert
-	21, // 31: flowrensic.v1.ListAlertsResponse.page:type_name -> flowrensic.v1.PageResponse
-	32, // [32:32] is the sub-list for method output_type
-	32, // [32:32] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	32, // 0: flowrensic.v1.Evidence.at:type_name -> google.protobuf.Timestamp
+	32, // 1: flowrensic.v1.Evidence.last_seen_at:type_name -> google.protobuf.Timestamp
+	32, // 2: flowrensic.v1.Evidence.stopped_at:type_name -> google.protobuf.Timestamp
+	32, // 3: flowrensic.v1.FindingEpisode.started_at:type_name -> google.protobuf.Timestamp
+	32, // 4: flowrensic.v1.FindingEpisode.last_seen_at:type_name -> google.protobuf.Timestamp
+	32, // 5: flowrensic.v1.FindingEpisode.ended_at:type_name -> google.protobuf.Timestamp
+	0,  // 6: flowrensic.v1.Finding.class:type_name -> flowrensic.v1.FindingClass
+	2,  // 7: flowrensic.v1.Finding.severity:type_name -> flowrensic.v1.Severity
+	5,  // 8: flowrensic.v1.Finding.evidence:type_name -> flowrensic.v1.Evidence
+	32, // 9: flowrensic.v1.Finding.detected_at:type_name -> google.protobuf.Timestamp
+	31, // 10: flowrensic.v1.Finding.details:type_name -> flowrensic.v1.Finding.DetailsEntry
+	4,  // 11: flowrensic.v1.Finding.status:type_name -> flowrensic.v1.FindingStatus
+	32, // 12: flowrensic.v1.Finding.mistaken_at:type_name -> google.protobuf.Timestamp
+	3,  // 13: flowrensic.v1.Finding.rule_status:type_name -> flowrensic.v1.RuleStatus
+	6,  // 14: flowrensic.v1.Finding.episode:type_name -> flowrensic.v1.FindingEpisode
+	32, // 15: flowrensic.v1.Finding.first_seen_at:type_name -> google.protobuf.Timestamp
+	32, // 16: flowrensic.v1.Finding.last_seen_at:type_name -> google.protobuf.Timestamp
+	2,  // 17: flowrensic.v1.ListFindingsRequest.severity:type_name -> flowrensic.v1.Severity
+	0,  // 18: flowrensic.v1.ListFindingsRequest.class:type_name -> flowrensic.v1.FindingClass
+	4,  // 19: flowrensic.v1.ListFindingsRequest.status:type_name -> flowrensic.v1.FindingStatus
+	33, // 20: flowrensic.v1.ListFindingsRequest.page:type_name -> flowrensic.v1.PageRequest
+	1,  // 21: flowrensic.v1.ListFindingsRequest.group:type_name -> flowrensic.v1.FindingGroup
+	7,  // 22: flowrensic.v1.ListFindingsResponse.findings:type_name -> flowrensic.v1.Finding
+	34, // 23: flowrensic.v1.ListFindingsResponse.page:type_name -> flowrensic.v1.PageResponse
+	2,  // 24: flowrensic.v1.CountFindingGroupsRequest.severity:type_name -> flowrensic.v1.Severity
+	4,  // 25: flowrensic.v1.CountFindingGroupsRequest.status:type_name -> flowrensic.v1.FindingStatus
+	1,  // 26: flowrensic.v1.FindingGroupCount.group:type_name -> flowrensic.v1.FindingGroup
+	0,  // 27: flowrensic.v1.FindingGroupCount.classes:type_name -> flowrensic.v1.FindingClass
+	2,  // 28: flowrensic.v1.FindingGroupCount.worst:type_name -> flowrensic.v1.Severity
+	2,  // 29: flowrensic.v1.CountFindingGroupsResponse.worst:type_name -> flowrensic.v1.Severity
+	11, // 30: flowrensic.v1.CountFindingGroupsResponse.groups:type_name -> flowrensic.v1.FindingGroupCount
+	8,  // 31: flowrensic.v1.ExportFindingsRequest.list:type_name -> flowrensic.v1.ListFindingsRequest
+	34, // 32: flowrensic.v1.ExportFindingsResponse.page:type_name -> flowrensic.v1.PageResponse
+	0,  // 33: flowrensic.v1.Threshold.classes:type_name -> flowrensic.v1.FindingClass
+	16, // 34: flowrensic.v1.ListThresholdsResponse.thresholds:type_name -> flowrensic.v1.Threshold
+	33, // 35: flowrensic.v1.GetFindingRequest.runs_page:type_name -> flowrensic.v1.PageRequest
+	7,  // 36: flowrensic.v1.GetFindingResponse.finding:type_name -> flowrensic.v1.Finding
+	34, // 37: flowrensic.v1.GetFindingResponse.runs_page:type_name -> flowrensic.v1.PageResponse
+	33, // 38: flowrensic.v1.ListFindingEpisodesRequest.page:type_name -> flowrensic.v1.PageRequest
+	6,  // 39: flowrensic.v1.ListFindingEpisodesResponse.episodes:type_name -> flowrensic.v1.FindingEpisode
+	34, // 40: flowrensic.v1.ListFindingEpisodesResponse.page:type_name -> flowrensic.v1.PageResponse
+	33, // 41: flowrensic.v1.ListFindingObservationsRequest.page:type_name -> flowrensic.v1.PageRequest
+	5,  // 42: flowrensic.v1.ListFindingObservationsResponse.observations:type_name -> flowrensic.v1.Evidence
+	34, // 43: flowrensic.v1.ListFindingObservationsResponse.page:type_name -> flowrensic.v1.PageResponse
+	7,  // 44: flowrensic.v1.SilenceFindingResponse.finding:type_name -> flowrensic.v1.Finding
+	7,  // 45: flowrensic.v1.UnsilenceFindingResponse.finding:type_name -> flowrensic.v1.Finding
+	32, // 46: flowrensic.v1.Alert.raised_at:type_name -> google.protobuf.Timestamp
+	7,  // 47: flowrensic.v1.Alert.finding:type_name -> flowrensic.v1.Finding
+	33, // 48: flowrensic.v1.ListAlertsRequest.page:type_name -> flowrensic.v1.PageRequest
+	28, // 49: flowrensic.v1.ListAlertsResponse.alerts:type_name -> flowrensic.v1.Alert
+	34, // 50: flowrensic.v1.ListAlertsResponse.page:type_name -> flowrensic.v1.PageResponse
+	51, // [51:51] is the sub-list for method output_type
+	51, // [51:51] is the sub-list for method input_type
+	51, // [51:51] is the sub-list for extension type_name
+	51, // [51:51] is the sub-list for extension extendee
+	0,  // [0:51] is the sub-list for field type_name
 }
 
 func init() { file_flowrensic_v1_finding_proto_init() }
@@ -1792,8 +3004,8 @@ func file_flowrensic_v1_finding_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_flowrensic_v1_finding_proto_rawDesc), len(file_flowrensic_v1_finding_proto_rawDesc)),
-			NumEnums:      4,
-			NumMessages:   15,
+			NumEnums:      5,
+			NumMessages:   27,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

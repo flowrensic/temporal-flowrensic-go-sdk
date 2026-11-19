@@ -596,8 +596,14 @@ type WorkerBufferReport struct {
 	RecordsDropped int64                  `protobuf:"varint,2,opt,name=records_dropped,json=recordsDropped,proto3" json:"records_dropped,omitempty"`
 	SendsTimedOut  int64                  `protobuf:"varint,3,opt,name=sends_timed_out,json=sendsTimedOut,proto3" json:"sends_timed_out,omitempty"`
 	RecordsWaiting int64                  `protobuf:"varint,4,opt,name=records_waiting,json=recordsWaiting,proto3" json:"records_waiting,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// The time the SDK's own code took on the worker since the last report
+	// that was answered, as the number of measures per bucket: 18 counts, whose
+	// upper edges are 5, 10, 25, 50, 100, 250 and 500 microseconds, 1, 2.5, 5,
+	// 10, 25, 50, 100, 250 and 500 milliseconds and 1 second, the last count
+	// those above 1 second. Empty: nothing was timed.
+	OwnTimeCounts []int64 `protobuf:"varint,5,rep,packed,name=own_time_counts,json=ownTimeCounts,proto3" json:"own_time_counts,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *WorkerBufferReport) Reset() {
@@ -656,6 +662,13 @@ func (x *WorkerBufferReport) GetRecordsWaiting() int64 {
 		return x.RecordsWaiting
 	}
 	return 0
+}
+
+func (x *WorkerBufferReport) GetOwnTimeCounts() []int64 {
+	if x != nil {
+		return x.OwnTimeCounts
+	}
+	return nil
 }
 
 type IngestActivityEventsResponse struct {
@@ -1563,12 +1576,13 @@ const file_flowrensic_v1_activity_metrics_proto_rawDesc = "" +
 	"\vsend_number\x18\x05 \x01(\x03R\n" +
 	"sendNumber\x12\x1f\n" +
 	"\vworker_name\x18\x06 \x01(\tR\n" +
-	"workerName\"\xa0\x01\n" +
+	"workerName\"\xc8\x01\n" +
 	"\x12WorkerBufferReport\x12\x10\n" +
 	"\x03env\x18\x01 \x01(\tR\x03env\x12'\n" +
 	"\x0frecords_dropped\x18\x02 \x01(\x03R\x0erecordsDropped\x12&\n" +
 	"\x0fsends_timed_out\x18\x03 \x01(\x03R\rsendsTimedOut\x12'\n" +
-	"\x0frecords_waiting\x18\x04 \x01(\x03R\x0erecordsWaiting\":\n" +
+	"\x0frecords_waiting\x18\x04 \x01(\x03R\x0erecordsWaiting\x12&\n" +
+	"\x0fown_time_counts\x18\x05 \x03(\x03R\rownTimeCounts\":\n" +
 	"\x1cIngestActivityEventsResponse\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\x05R\baccepted\"\xc3\x05\n" +
 	"\vWorkflowRun\x122\n" +
@@ -1651,8 +1665,8 @@ const file_flowrensic_v1_activity_metrics_proto_rawDesc = "" +
 	"\x11OUTCOME_COMPLETED\x10\x01\x12\x12\n" +
 	"\x0eOUTCOME_FAILED\x10\x02\x12\x15\n" +
 	"\x11OUTCOME_TIMED_OUT\x10\x03\x12\x14\n" +
-	"\x10OUTCOME_CANCELED\x10\x04B\xbd\x01\n" +
-	"\x11com.flowrensic.v1B\x14ActivityMetricsProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x10OUTCOME_CANCELED\x10\x04B\xd4\x01\n" +
+	"\x11com.flowrensic.v1B\x14ActivityMetricsProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_activity_metrics_proto_rawDescOnce sync.Once

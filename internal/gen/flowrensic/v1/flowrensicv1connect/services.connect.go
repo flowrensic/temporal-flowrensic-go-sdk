@@ -8,7 +8,7 @@ import (
 	connect "connectrpc.com/connect"
 	context "context"
 	errors "errors"
-	v1 "go.flowrensic.com/sdk/internal/gen/flowrensic/v1"
+	v1 "go.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1"
 	http "net/http"
 	strings "strings"
 )
@@ -99,6 +99,12 @@ const (
 	// QueryServiceListFindingsProcedure is the fully-qualified name of the QueryService's ListFindings
 	// RPC.
 	QueryServiceListFindingsProcedure = "/flowrensic.v1.QueryService/ListFindings"
+	// QueryServiceExportFindingsProcedure is the fully-qualified name of the QueryService's
+	// ExportFindings RPC.
+	QueryServiceExportFindingsProcedure = "/flowrensic.v1.QueryService/ExportFindings"
+	// QueryServiceCountFindingGroupsProcedure is the fully-qualified name of the QueryService's
+	// CountFindingGroups RPC.
+	QueryServiceCountFindingGroupsProcedure = "/flowrensic.v1.QueryService/CountFindingGroups"
 	// QueryServiceListAlertsProcedure is the fully-qualified name of the QueryService's ListAlerts RPC.
 	QueryServiceListAlertsProcedure = "/flowrensic.v1.QueryService/ListAlerts"
 	// QueryServiceEngineMetricsProcedure is the fully-qualified name of the QueryService's
@@ -137,6 +143,15 @@ const (
 	// QueryServiceListEphemeralRunsProcedure is the fully-qualified name of the QueryService's
 	// ListEphemeralRuns RPC.
 	QueryServiceListEphemeralRunsProcedure = "/flowrensic.v1.QueryService/ListEphemeralRuns"
+	// QueryServiceListEphemeralRunSummariesProcedure is the fully-qualified name of the QueryService's
+	// ListEphemeralRunSummaries RPC.
+	QueryServiceListEphemeralRunSummariesProcedure = "/flowrensic.v1.QueryService/ListEphemeralRunSummaries"
+	// QueryServiceDeleteEphemeralRunProcedure is the fully-qualified name of the QueryService's
+	// DeleteEphemeralRun RPC.
+	QueryServiceDeleteEphemeralRunProcedure = "/flowrensic.v1.QueryService/DeleteEphemeralRun"
+	// QueryServiceGetEphemeralRunSummaryProcedure is the fully-qualified name of the QueryService's
+	// GetEphemeralRunSummary RPC.
+	QueryServiceGetEphemeralRunSummaryProcedure = "/flowrensic.v1.QueryService/GetEphemeralRunSummary"
 	// QueryServiceEphemeralRunMetricsProcedure is the fully-qualified name of the QueryService's
 	// EphemeralRunMetrics RPC.
 	QueryServiceEphemeralRunMetricsProcedure = "/flowrensic.v1.QueryService/EphemeralRunMetrics"
@@ -157,9 +172,18 @@ const (
 	QueryServiceListThresholdsProcedure = "/flowrensic.v1.QueryService/ListThresholds"
 	// QueryServiceGetFindingProcedure is the fully-qualified name of the QueryService's GetFinding RPC.
 	QueryServiceGetFindingProcedure = "/flowrensic.v1.QueryService/GetFinding"
-	// QueryServiceSetFindingStatusProcedure is the fully-qualified name of the QueryService's
-	// SetFindingStatus RPC.
-	QueryServiceSetFindingStatusProcedure = "/flowrensic.v1.QueryService/SetFindingStatus"
+	// QueryServiceSilenceFindingProcedure is the fully-qualified name of the QueryService's
+	// SilenceFinding RPC.
+	QueryServiceSilenceFindingProcedure = "/flowrensic.v1.QueryService/SilenceFinding"
+	// QueryServiceUnsilenceFindingProcedure is the fully-qualified name of the QueryService's
+	// UnsilenceFinding RPC.
+	QueryServiceUnsilenceFindingProcedure = "/flowrensic.v1.QueryService/UnsilenceFinding"
+	// QueryServiceListFindingEpisodesProcedure is the fully-qualified name of the QueryService's
+	// ListFindingEpisodes RPC.
+	QueryServiceListFindingEpisodesProcedure = "/flowrensic.v1.QueryService/ListFindingEpisodes"
+	// QueryServiceListFindingObservationsProcedure is the fully-qualified name of the QueryService's
+	// ListFindingObservations RPC.
+	QueryServiceListFindingObservationsProcedure = "/flowrensic.v1.QueryService/ListFindingObservations"
 	// QueryServiceGetServerConfigProcedure is the fully-qualified name of the QueryService's
 	// GetServerConfig RPC.
 	QueryServiceGetServerConfigProcedure = "/flowrensic.v1.QueryService/GetServerConfig"
@@ -752,6 +776,12 @@ type QueryServiceClient interface {
 	ActivityStats(context.Context, *connect.Request[v1.ActivityStatsRequest]) (*connect.Response[v1.ActivityStatsResponse], error)
 	ListRuns(context.Context, *connect.Request[v1.ListRunsRequest]) (*connect.Response[v1.ListRunsResponse], error)
 	ListFindings(context.Context, *connect.Request[v1.ListFindingsRequest]) (*connect.Response[v1.ListFindingsResponse], error)
+	// ExportFindings answers the findings ListFindings answers for the same
+	// request, in the finding format of FPP-165.
+	ExportFindings(context.Context, *connect.Request[v1.ExportFindingsRequest]) (*connect.Response[v1.ExportFindingsResponse], error)
+	// CountFindingGroups is the groups of the Findings page, each with its
+	// classes, its count and its worst severity (FPP-112-R33).
+	CountFindingGroups(context.Context, *connect.Request[v1.CountFindingGroupsRequest]) (*connect.Response[v1.CountFindingGroupsResponse], error)
 	// ListAlerts answers the current alerts of FPP-121, newest first.
 	ListAlerts(context.Context, *connect.Request[v1.ListAlertsRequest]) (*connect.Response[v1.ListAlertsResponse], error)
 	EngineMetrics(context.Context, *connect.Request[v1.EngineMetricsRequest]) (*connect.Response[v1.EngineMetricsResponse], error)
@@ -775,6 +805,15 @@ type QueryServiceClient interface {
 	ListWorkflowTypes(context.Context, *connect.Request[v1.ListWorkflowTypesRequest]) (*connect.Response[v1.ListWorkflowTypesResponse], error)
 	GetWorkflowType(context.Context, *connect.Request[v1.GetWorkflowTypeRequest]) (*connect.Response[v1.GetWorkflowTypeResponse], error)
 	ListEphemeralRuns(context.Context, *connect.Request[v1.ListEphemeralRunsRequest]) (*connect.Response[v1.ListEphemeralRunsResponse], error)
+	// ListEphemeralRunSummaries lists the runs of the ephemeral envs, newest
+	// first, for the Ephemeral runs page.
+	ListEphemeralRunSummaries(context.Context, *connect.Request[v1.ListEphemeralRunSummariesRequest]) (*connect.Response[v1.ListEphemeralRunSummariesResponse], error)
+	// DeleteEphemeralRun deletes one run of an ephemeral env and all its data.
+	DeleteEphemeralRun(context.Context, *connect.Request[v1.DeleteEphemeralRunRequest]) (*connect.Response[v1.DeleteEphemeralRunResponse], error)
+	// GetEphemeralRunSummary is the summary of the run of the caller, read from
+	// the headers Flowrensic-Current-Env, Flowrensic-Env-Access-Key and
+	// Flowrensic-Current-Ephemeral-Run. A pipeline passes or fails on it.
+	GetEphemeralRunSummary(context.Context, *connect.Request[v1.GetEphemeralRunSummaryRequest]) (*connect.Response[v1.GetEphemeralRunSummaryResponse], error)
 	EphemeralRunMetrics(context.Context, *connect.Request[v1.EphemeralRunMetricsRequest]) (*connect.Response[v1.EphemeralRunMetricsResponse], error)
 	WorkerMetrics(context.Context, *connect.Request[v1.WorkerMetricsRequest]) (*connect.Response[v1.WorkerMetricsResponse], error)
 	// CostBreakdown counts the billable events of one namespace over two windows
@@ -790,9 +829,19 @@ type QueryServiceClient interface {
 	ListThresholds(context.Context, *connect.Request[v1.ListThresholdsRequest]) (*connect.Response[v1.ListThresholdsResponse], error)
 	// GetFinding is one stored finding by its id, not found when none is.
 	GetFinding(context.Context, *connect.Request[v1.GetFindingRequest]) (*connect.Response[v1.GetFindingResponse], error)
-	// SetFindingStatus archives a finding or makes it active again. A status
-	// the finding already has changes nothing.
-	SetFindingStatus(context.Context, *connect.Request[v1.SetFindingStatusRequest]) (*connect.Response[v1.SetFindingStatusResponse], error)
+	// SilenceFinding puts a mark on a finding, to silence it as expected
+	// behaviour (FPP-305). The mark is kept in the blob backend, not in the
+	// database, and silences every finding it matches, stored or to come.
+	SilenceFinding(context.Context, *connect.Request[v1.SilenceFindingRequest]) (*connect.Response[v1.SilenceFindingResponse], error)
+	// UnsilenceFinding deletes from the blob backend every mark that matches a
+	// finding, so the findings of those marks are no longer silenced, unless
+	// another mark still matches them (FPP-305-R09).
+	UnsilenceFinding(context.Context, *connect.Request[v1.UnsilenceFindingRequest]) (*connect.Response[v1.UnsilenceFindingResponse], error)
+	// ListFindingEpisodes is the episodes of a finding, newest first.
+	ListFindingEpisodes(context.Context, *connect.Request[v1.ListFindingEpisodesRequest]) (*connect.Response[v1.ListFindingEpisodesResponse], error)
+	// ListFindingObservations is the observations of one episode of a
+	// finding, newest first.
+	ListFindingObservations(context.Context, *connect.Request[v1.ListFindingObservationsRequest]) (*connect.Response[v1.ListFindingObservationsResponse], error)
 	// GetServerConfig is the config the server was started with, secrets left
 	// out.
 	GetServerConfig(context.Context, *connect.Request[v1.GetServerConfigRequest]) (*connect.Response[v1.GetServerConfigResponse], error)
@@ -834,6 +883,18 @@ func NewQueryServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			httpClient,
 			baseURL+QueryServiceListFindingsProcedure,
 			connect.WithSchema(queryServiceMethods.ByName("ListFindings")),
+			connect.WithClientOptions(opts...),
+		),
+		exportFindings: connect.NewClient[v1.ExportFindingsRequest, v1.ExportFindingsResponse](
+			httpClient,
+			baseURL+QueryServiceExportFindingsProcedure,
+			connect.WithSchema(queryServiceMethods.ByName("ExportFindings")),
+			connect.WithClientOptions(opts...),
+		),
+		countFindingGroups: connect.NewClient[v1.CountFindingGroupsRequest, v1.CountFindingGroupsResponse](
+			httpClient,
+			baseURL+QueryServiceCountFindingGroupsProcedure,
+			connect.WithSchema(queryServiceMethods.ByName("CountFindingGroups")),
 			connect.WithClientOptions(opts...),
 		),
 		listAlerts: connect.NewClient[v1.ListAlertsRequest, v1.ListAlertsResponse](
@@ -914,6 +975,24 @@ func NewQueryServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(queryServiceMethods.ByName("ListEphemeralRuns")),
 			connect.WithClientOptions(opts...),
 		),
+		listEphemeralRunSummaries: connect.NewClient[v1.ListEphemeralRunSummariesRequest, v1.ListEphemeralRunSummariesResponse](
+			httpClient,
+			baseURL+QueryServiceListEphemeralRunSummariesProcedure,
+			connect.WithSchema(queryServiceMethods.ByName("ListEphemeralRunSummaries")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteEphemeralRun: connect.NewClient[v1.DeleteEphemeralRunRequest, v1.DeleteEphemeralRunResponse](
+			httpClient,
+			baseURL+QueryServiceDeleteEphemeralRunProcedure,
+			connect.WithSchema(queryServiceMethods.ByName("DeleteEphemeralRun")),
+			connect.WithClientOptions(opts...),
+		),
+		getEphemeralRunSummary: connect.NewClient[v1.GetEphemeralRunSummaryRequest, v1.GetEphemeralRunSummaryResponse](
+			httpClient,
+			baseURL+QueryServiceGetEphemeralRunSummaryProcedure,
+			connect.WithSchema(queryServiceMethods.ByName("GetEphemeralRunSummary")),
+			connect.WithClientOptions(opts...),
+		),
 		ephemeralRunMetrics: connect.NewClient[v1.EphemeralRunMetricsRequest, v1.EphemeralRunMetricsResponse](
 			httpClient,
 			baseURL+QueryServiceEphemeralRunMetricsProcedure,
@@ -956,10 +1035,28 @@ func NewQueryServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(queryServiceMethods.ByName("GetFinding")),
 			connect.WithClientOptions(opts...),
 		),
-		setFindingStatus: connect.NewClient[v1.SetFindingStatusRequest, v1.SetFindingStatusResponse](
+		silenceFinding: connect.NewClient[v1.SilenceFindingRequest, v1.SilenceFindingResponse](
 			httpClient,
-			baseURL+QueryServiceSetFindingStatusProcedure,
-			connect.WithSchema(queryServiceMethods.ByName("SetFindingStatus")),
+			baseURL+QueryServiceSilenceFindingProcedure,
+			connect.WithSchema(queryServiceMethods.ByName("SilenceFinding")),
+			connect.WithClientOptions(opts...),
+		),
+		unsilenceFinding: connect.NewClient[v1.UnsilenceFindingRequest, v1.UnsilenceFindingResponse](
+			httpClient,
+			baseURL+QueryServiceUnsilenceFindingProcedure,
+			connect.WithSchema(queryServiceMethods.ByName("UnsilenceFinding")),
+			connect.WithClientOptions(opts...),
+		),
+		listFindingEpisodes: connect.NewClient[v1.ListFindingEpisodesRequest, v1.ListFindingEpisodesResponse](
+			httpClient,
+			baseURL+QueryServiceListFindingEpisodesProcedure,
+			connect.WithSchema(queryServiceMethods.ByName("ListFindingEpisodes")),
+			connect.WithClientOptions(opts...),
+		),
+		listFindingObservations: connect.NewClient[v1.ListFindingObservationsRequest, v1.ListFindingObservationsResponse](
+			httpClient,
+			baseURL+QueryServiceListFindingObservationsProcedure,
+			connect.WithSchema(queryServiceMethods.ByName("ListFindingObservations")),
 			connect.WithClientOptions(opts...),
 		),
 		getServerConfig: connect.NewClient[v1.GetServerConfigRequest, v1.GetServerConfigResponse](
@@ -991,34 +1088,42 @@ func NewQueryServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // queryServiceClient implements QueryServiceClient.
 type queryServiceClient struct {
-	activityStats       *connect.Client[v1.ActivityStatsRequest, v1.ActivityStatsResponse]
-	listRuns            *connect.Client[v1.ListRunsRequest, v1.ListRunsResponse]
-	listFindings        *connect.Client[v1.ListFindingsRequest, v1.ListFindingsResponse]
-	listAlerts          *connect.Client[v1.ListAlertsRequest, v1.ListAlertsResponse]
-	engineMetrics       *connect.Client[v1.EngineMetricsRequest, v1.EngineMetricsResponse]
-	updateRejections    *connect.Client[v1.UpdateRejectionsRequest, v1.UpdateRejectionsResponse]
-	listReplayHistories *connect.Client[v1.ListReplayHistoriesRequest, v1.ListReplayHistoriesResponse]
-	listReplayResults   *connect.Client[v1.ListReplayResultsRequest, v1.ListReplayResultsResponse]
-	listReplayRequests  *connect.Client[v1.ListReplayRequestsRequest, v1.ListReplayRequestsResponse]
-	listReplaySets      *connect.Client[v1.ListReplaySetsRequest, v1.ListReplaySetsResponse]
-	getReplaySet        *connect.Client[v1.GetReplaySetRequest, v1.GetReplaySetResponse]
-	quarantineHistory   *connect.Client[v1.QuarantineHistoryRequest, v1.QuarantineHistoryResponse]
-	releaseHistory      *connect.Client[v1.ReleaseHistoryRequest, v1.ReleaseHistoryResponse]
-	listWorkflowTypes   *connect.Client[v1.ListWorkflowTypesRequest, v1.ListWorkflowTypesResponse]
-	getWorkflowType     *connect.Client[v1.GetWorkflowTypeRequest, v1.GetWorkflowTypeResponse]
-	listEphemeralRuns   *connect.Client[v1.ListEphemeralRunsRequest, v1.ListEphemeralRunsResponse]
-	ephemeralRunMetrics *connect.Client[v1.EphemeralRunMetricsRequest, v1.EphemeralRunMetricsResponse]
-	workerMetrics       *connect.Client[v1.WorkerMetricsRequest, v1.WorkerMetricsResponse]
-	costBreakdown       *connect.Client[v1.CostBreakdownRequest, v1.CostBreakdownResponse]
-	getDeployment       *connect.Client[v1.GetDeploymentRequest, v1.GetDeploymentResponse]
-	deployAttemptCounts *connect.Client[v1.DeployAttemptCountsRequest, v1.DeployAttemptCountsResponse]
-	listThresholds      *connect.Client[v1.ListThresholdsRequest, v1.ListThresholdsResponse]
-	getFinding          *connect.Client[v1.GetFindingRequest, v1.GetFindingResponse]
-	setFindingStatus    *connect.Client[v1.SetFindingStatusRequest, v1.SetFindingStatusResponse]
-	getServerConfig     *connect.Client[v1.GetServerConfigRequest, v1.GetServerConfigResponse]
-	getStoredData       *connect.Client[v1.GetStoredDataRequest, v1.GetStoredDataResponse]
-	getCatchUp          *connect.Client[v1.GetCatchUpRequest, v1.GetCatchUpResponse]
-	getLoad             *connect.Client[v1.GetLoadRequest, v1.GetLoadResponse]
+	activityStats             *connect.Client[v1.ActivityStatsRequest, v1.ActivityStatsResponse]
+	listRuns                  *connect.Client[v1.ListRunsRequest, v1.ListRunsResponse]
+	listFindings              *connect.Client[v1.ListFindingsRequest, v1.ListFindingsResponse]
+	exportFindings            *connect.Client[v1.ExportFindingsRequest, v1.ExportFindingsResponse]
+	countFindingGroups        *connect.Client[v1.CountFindingGroupsRequest, v1.CountFindingGroupsResponse]
+	listAlerts                *connect.Client[v1.ListAlertsRequest, v1.ListAlertsResponse]
+	engineMetrics             *connect.Client[v1.EngineMetricsRequest, v1.EngineMetricsResponse]
+	updateRejections          *connect.Client[v1.UpdateRejectionsRequest, v1.UpdateRejectionsResponse]
+	listReplayHistories       *connect.Client[v1.ListReplayHistoriesRequest, v1.ListReplayHistoriesResponse]
+	listReplayResults         *connect.Client[v1.ListReplayResultsRequest, v1.ListReplayResultsResponse]
+	listReplayRequests        *connect.Client[v1.ListReplayRequestsRequest, v1.ListReplayRequestsResponse]
+	listReplaySets            *connect.Client[v1.ListReplaySetsRequest, v1.ListReplaySetsResponse]
+	getReplaySet              *connect.Client[v1.GetReplaySetRequest, v1.GetReplaySetResponse]
+	quarantineHistory         *connect.Client[v1.QuarantineHistoryRequest, v1.QuarantineHistoryResponse]
+	releaseHistory            *connect.Client[v1.ReleaseHistoryRequest, v1.ReleaseHistoryResponse]
+	listWorkflowTypes         *connect.Client[v1.ListWorkflowTypesRequest, v1.ListWorkflowTypesResponse]
+	getWorkflowType           *connect.Client[v1.GetWorkflowTypeRequest, v1.GetWorkflowTypeResponse]
+	listEphemeralRuns         *connect.Client[v1.ListEphemeralRunsRequest, v1.ListEphemeralRunsResponse]
+	listEphemeralRunSummaries *connect.Client[v1.ListEphemeralRunSummariesRequest, v1.ListEphemeralRunSummariesResponse]
+	deleteEphemeralRun        *connect.Client[v1.DeleteEphemeralRunRequest, v1.DeleteEphemeralRunResponse]
+	getEphemeralRunSummary    *connect.Client[v1.GetEphemeralRunSummaryRequest, v1.GetEphemeralRunSummaryResponse]
+	ephemeralRunMetrics       *connect.Client[v1.EphemeralRunMetricsRequest, v1.EphemeralRunMetricsResponse]
+	workerMetrics             *connect.Client[v1.WorkerMetricsRequest, v1.WorkerMetricsResponse]
+	costBreakdown             *connect.Client[v1.CostBreakdownRequest, v1.CostBreakdownResponse]
+	getDeployment             *connect.Client[v1.GetDeploymentRequest, v1.GetDeploymentResponse]
+	deployAttemptCounts       *connect.Client[v1.DeployAttemptCountsRequest, v1.DeployAttemptCountsResponse]
+	listThresholds            *connect.Client[v1.ListThresholdsRequest, v1.ListThresholdsResponse]
+	getFinding                *connect.Client[v1.GetFindingRequest, v1.GetFindingResponse]
+	silenceFinding            *connect.Client[v1.SilenceFindingRequest, v1.SilenceFindingResponse]
+	unsilenceFinding          *connect.Client[v1.UnsilenceFindingRequest, v1.UnsilenceFindingResponse]
+	listFindingEpisodes       *connect.Client[v1.ListFindingEpisodesRequest, v1.ListFindingEpisodesResponse]
+	listFindingObservations   *connect.Client[v1.ListFindingObservationsRequest, v1.ListFindingObservationsResponse]
+	getServerConfig           *connect.Client[v1.GetServerConfigRequest, v1.GetServerConfigResponse]
+	getStoredData             *connect.Client[v1.GetStoredDataRequest, v1.GetStoredDataResponse]
+	getCatchUp                *connect.Client[v1.GetCatchUpRequest, v1.GetCatchUpResponse]
+	getLoad                   *connect.Client[v1.GetLoadRequest, v1.GetLoadResponse]
 }
 
 // ActivityStats calls flowrensic.v1.QueryService.ActivityStats.
@@ -1034,6 +1139,16 @@ func (c *queryServiceClient) ListRuns(ctx context.Context, req *connect.Request[
 // ListFindings calls flowrensic.v1.QueryService.ListFindings.
 func (c *queryServiceClient) ListFindings(ctx context.Context, req *connect.Request[v1.ListFindingsRequest]) (*connect.Response[v1.ListFindingsResponse], error) {
 	return c.listFindings.CallUnary(ctx, req)
+}
+
+// ExportFindings calls flowrensic.v1.QueryService.ExportFindings.
+func (c *queryServiceClient) ExportFindings(ctx context.Context, req *connect.Request[v1.ExportFindingsRequest]) (*connect.Response[v1.ExportFindingsResponse], error) {
+	return c.exportFindings.CallUnary(ctx, req)
+}
+
+// CountFindingGroups calls flowrensic.v1.QueryService.CountFindingGroups.
+func (c *queryServiceClient) CountFindingGroups(ctx context.Context, req *connect.Request[v1.CountFindingGroupsRequest]) (*connect.Response[v1.CountFindingGroupsResponse], error) {
+	return c.countFindingGroups.CallUnary(ctx, req)
 }
 
 // ListAlerts calls flowrensic.v1.QueryService.ListAlerts.
@@ -1101,6 +1216,21 @@ func (c *queryServiceClient) ListEphemeralRuns(ctx context.Context, req *connect
 	return c.listEphemeralRuns.CallUnary(ctx, req)
 }
 
+// ListEphemeralRunSummaries calls flowrensic.v1.QueryService.ListEphemeralRunSummaries.
+func (c *queryServiceClient) ListEphemeralRunSummaries(ctx context.Context, req *connect.Request[v1.ListEphemeralRunSummariesRequest]) (*connect.Response[v1.ListEphemeralRunSummariesResponse], error) {
+	return c.listEphemeralRunSummaries.CallUnary(ctx, req)
+}
+
+// DeleteEphemeralRun calls flowrensic.v1.QueryService.DeleteEphemeralRun.
+func (c *queryServiceClient) DeleteEphemeralRun(ctx context.Context, req *connect.Request[v1.DeleteEphemeralRunRequest]) (*connect.Response[v1.DeleteEphemeralRunResponse], error) {
+	return c.deleteEphemeralRun.CallUnary(ctx, req)
+}
+
+// GetEphemeralRunSummary calls flowrensic.v1.QueryService.GetEphemeralRunSummary.
+func (c *queryServiceClient) GetEphemeralRunSummary(ctx context.Context, req *connect.Request[v1.GetEphemeralRunSummaryRequest]) (*connect.Response[v1.GetEphemeralRunSummaryResponse], error) {
+	return c.getEphemeralRunSummary.CallUnary(ctx, req)
+}
+
 // EphemeralRunMetrics calls flowrensic.v1.QueryService.EphemeralRunMetrics.
 func (c *queryServiceClient) EphemeralRunMetrics(ctx context.Context, req *connect.Request[v1.EphemeralRunMetricsRequest]) (*connect.Response[v1.EphemeralRunMetricsResponse], error) {
 	return c.ephemeralRunMetrics.CallUnary(ctx, req)
@@ -1136,9 +1266,24 @@ func (c *queryServiceClient) GetFinding(ctx context.Context, req *connect.Reques
 	return c.getFinding.CallUnary(ctx, req)
 }
 
-// SetFindingStatus calls flowrensic.v1.QueryService.SetFindingStatus.
-func (c *queryServiceClient) SetFindingStatus(ctx context.Context, req *connect.Request[v1.SetFindingStatusRequest]) (*connect.Response[v1.SetFindingStatusResponse], error) {
-	return c.setFindingStatus.CallUnary(ctx, req)
+// SilenceFinding calls flowrensic.v1.QueryService.SilenceFinding.
+func (c *queryServiceClient) SilenceFinding(ctx context.Context, req *connect.Request[v1.SilenceFindingRequest]) (*connect.Response[v1.SilenceFindingResponse], error) {
+	return c.silenceFinding.CallUnary(ctx, req)
+}
+
+// UnsilenceFinding calls flowrensic.v1.QueryService.UnsilenceFinding.
+func (c *queryServiceClient) UnsilenceFinding(ctx context.Context, req *connect.Request[v1.UnsilenceFindingRequest]) (*connect.Response[v1.UnsilenceFindingResponse], error) {
+	return c.unsilenceFinding.CallUnary(ctx, req)
+}
+
+// ListFindingEpisodes calls flowrensic.v1.QueryService.ListFindingEpisodes.
+func (c *queryServiceClient) ListFindingEpisodes(ctx context.Context, req *connect.Request[v1.ListFindingEpisodesRequest]) (*connect.Response[v1.ListFindingEpisodesResponse], error) {
+	return c.listFindingEpisodes.CallUnary(ctx, req)
+}
+
+// ListFindingObservations calls flowrensic.v1.QueryService.ListFindingObservations.
+func (c *queryServiceClient) ListFindingObservations(ctx context.Context, req *connect.Request[v1.ListFindingObservationsRequest]) (*connect.Response[v1.ListFindingObservationsResponse], error) {
+	return c.listFindingObservations.CallUnary(ctx, req)
 }
 
 // GetServerConfig calls flowrensic.v1.QueryService.GetServerConfig.
@@ -1166,6 +1311,12 @@ type QueryServiceHandler interface {
 	ActivityStats(context.Context, *connect.Request[v1.ActivityStatsRequest]) (*connect.Response[v1.ActivityStatsResponse], error)
 	ListRuns(context.Context, *connect.Request[v1.ListRunsRequest]) (*connect.Response[v1.ListRunsResponse], error)
 	ListFindings(context.Context, *connect.Request[v1.ListFindingsRequest]) (*connect.Response[v1.ListFindingsResponse], error)
+	// ExportFindings answers the findings ListFindings answers for the same
+	// request, in the finding format of FPP-165.
+	ExportFindings(context.Context, *connect.Request[v1.ExportFindingsRequest]) (*connect.Response[v1.ExportFindingsResponse], error)
+	// CountFindingGroups is the groups of the Findings page, each with its
+	// classes, its count and its worst severity (FPP-112-R33).
+	CountFindingGroups(context.Context, *connect.Request[v1.CountFindingGroupsRequest]) (*connect.Response[v1.CountFindingGroupsResponse], error)
 	// ListAlerts answers the current alerts of FPP-121, newest first.
 	ListAlerts(context.Context, *connect.Request[v1.ListAlertsRequest]) (*connect.Response[v1.ListAlertsResponse], error)
 	EngineMetrics(context.Context, *connect.Request[v1.EngineMetricsRequest]) (*connect.Response[v1.EngineMetricsResponse], error)
@@ -1189,6 +1340,15 @@ type QueryServiceHandler interface {
 	ListWorkflowTypes(context.Context, *connect.Request[v1.ListWorkflowTypesRequest]) (*connect.Response[v1.ListWorkflowTypesResponse], error)
 	GetWorkflowType(context.Context, *connect.Request[v1.GetWorkflowTypeRequest]) (*connect.Response[v1.GetWorkflowTypeResponse], error)
 	ListEphemeralRuns(context.Context, *connect.Request[v1.ListEphemeralRunsRequest]) (*connect.Response[v1.ListEphemeralRunsResponse], error)
+	// ListEphemeralRunSummaries lists the runs of the ephemeral envs, newest
+	// first, for the Ephemeral runs page.
+	ListEphemeralRunSummaries(context.Context, *connect.Request[v1.ListEphemeralRunSummariesRequest]) (*connect.Response[v1.ListEphemeralRunSummariesResponse], error)
+	// DeleteEphemeralRun deletes one run of an ephemeral env and all its data.
+	DeleteEphemeralRun(context.Context, *connect.Request[v1.DeleteEphemeralRunRequest]) (*connect.Response[v1.DeleteEphemeralRunResponse], error)
+	// GetEphemeralRunSummary is the summary of the run of the caller, read from
+	// the headers Flowrensic-Current-Env, Flowrensic-Env-Access-Key and
+	// Flowrensic-Current-Ephemeral-Run. A pipeline passes or fails on it.
+	GetEphemeralRunSummary(context.Context, *connect.Request[v1.GetEphemeralRunSummaryRequest]) (*connect.Response[v1.GetEphemeralRunSummaryResponse], error)
 	EphemeralRunMetrics(context.Context, *connect.Request[v1.EphemeralRunMetricsRequest]) (*connect.Response[v1.EphemeralRunMetricsResponse], error)
 	WorkerMetrics(context.Context, *connect.Request[v1.WorkerMetricsRequest]) (*connect.Response[v1.WorkerMetricsResponse], error)
 	// CostBreakdown counts the billable events of one namespace over two windows
@@ -1204,9 +1364,19 @@ type QueryServiceHandler interface {
 	ListThresholds(context.Context, *connect.Request[v1.ListThresholdsRequest]) (*connect.Response[v1.ListThresholdsResponse], error)
 	// GetFinding is one stored finding by its id, not found when none is.
 	GetFinding(context.Context, *connect.Request[v1.GetFindingRequest]) (*connect.Response[v1.GetFindingResponse], error)
-	// SetFindingStatus archives a finding or makes it active again. A status
-	// the finding already has changes nothing.
-	SetFindingStatus(context.Context, *connect.Request[v1.SetFindingStatusRequest]) (*connect.Response[v1.SetFindingStatusResponse], error)
+	// SilenceFinding puts a mark on a finding, to silence it as expected
+	// behaviour (FPP-305). The mark is kept in the blob backend, not in the
+	// database, and silences every finding it matches, stored or to come.
+	SilenceFinding(context.Context, *connect.Request[v1.SilenceFindingRequest]) (*connect.Response[v1.SilenceFindingResponse], error)
+	// UnsilenceFinding deletes from the blob backend every mark that matches a
+	// finding, so the findings of those marks are no longer silenced, unless
+	// another mark still matches them (FPP-305-R09).
+	UnsilenceFinding(context.Context, *connect.Request[v1.UnsilenceFindingRequest]) (*connect.Response[v1.UnsilenceFindingResponse], error)
+	// ListFindingEpisodes is the episodes of a finding, newest first.
+	ListFindingEpisodes(context.Context, *connect.Request[v1.ListFindingEpisodesRequest]) (*connect.Response[v1.ListFindingEpisodesResponse], error)
+	// ListFindingObservations is the observations of one episode of a
+	// finding, newest first.
+	ListFindingObservations(context.Context, *connect.Request[v1.ListFindingObservationsRequest]) (*connect.Response[v1.ListFindingObservationsResponse], error)
 	// GetServerConfig is the config the server was started with, secrets left
 	// out.
 	GetServerConfig(context.Context, *connect.Request[v1.GetServerConfigRequest]) (*connect.Response[v1.GetServerConfigResponse], error)
@@ -1244,6 +1414,18 @@ func NewQueryServiceHandler(svc QueryServiceHandler, opts ...connect.HandlerOpti
 		QueryServiceListFindingsProcedure,
 		svc.ListFindings,
 		connect.WithSchema(queryServiceMethods.ByName("ListFindings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	queryServiceExportFindingsHandler := connect.NewUnaryHandler(
+		QueryServiceExportFindingsProcedure,
+		svc.ExportFindings,
+		connect.WithSchema(queryServiceMethods.ByName("ExportFindings")),
+		connect.WithHandlerOptions(opts...),
+	)
+	queryServiceCountFindingGroupsHandler := connect.NewUnaryHandler(
+		QueryServiceCountFindingGroupsProcedure,
+		svc.CountFindingGroups,
+		connect.WithSchema(queryServiceMethods.ByName("CountFindingGroups")),
 		connect.WithHandlerOptions(opts...),
 	)
 	queryServiceListAlertsHandler := connect.NewUnaryHandler(
@@ -1324,6 +1506,24 @@ func NewQueryServiceHandler(svc QueryServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(queryServiceMethods.ByName("ListEphemeralRuns")),
 		connect.WithHandlerOptions(opts...),
 	)
+	queryServiceListEphemeralRunSummariesHandler := connect.NewUnaryHandler(
+		QueryServiceListEphemeralRunSummariesProcedure,
+		svc.ListEphemeralRunSummaries,
+		connect.WithSchema(queryServiceMethods.ByName("ListEphemeralRunSummaries")),
+		connect.WithHandlerOptions(opts...),
+	)
+	queryServiceDeleteEphemeralRunHandler := connect.NewUnaryHandler(
+		QueryServiceDeleteEphemeralRunProcedure,
+		svc.DeleteEphemeralRun,
+		connect.WithSchema(queryServiceMethods.ByName("DeleteEphemeralRun")),
+		connect.WithHandlerOptions(opts...),
+	)
+	queryServiceGetEphemeralRunSummaryHandler := connect.NewUnaryHandler(
+		QueryServiceGetEphemeralRunSummaryProcedure,
+		svc.GetEphemeralRunSummary,
+		connect.WithSchema(queryServiceMethods.ByName("GetEphemeralRunSummary")),
+		connect.WithHandlerOptions(opts...),
+	)
 	queryServiceEphemeralRunMetricsHandler := connect.NewUnaryHandler(
 		QueryServiceEphemeralRunMetricsProcedure,
 		svc.EphemeralRunMetrics,
@@ -1366,10 +1566,28 @@ func NewQueryServiceHandler(svc QueryServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(queryServiceMethods.ByName("GetFinding")),
 		connect.WithHandlerOptions(opts...),
 	)
-	queryServiceSetFindingStatusHandler := connect.NewUnaryHandler(
-		QueryServiceSetFindingStatusProcedure,
-		svc.SetFindingStatus,
-		connect.WithSchema(queryServiceMethods.ByName("SetFindingStatus")),
+	queryServiceSilenceFindingHandler := connect.NewUnaryHandler(
+		QueryServiceSilenceFindingProcedure,
+		svc.SilenceFinding,
+		connect.WithSchema(queryServiceMethods.ByName("SilenceFinding")),
+		connect.WithHandlerOptions(opts...),
+	)
+	queryServiceUnsilenceFindingHandler := connect.NewUnaryHandler(
+		QueryServiceUnsilenceFindingProcedure,
+		svc.UnsilenceFinding,
+		connect.WithSchema(queryServiceMethods.ByName("UnsilenceFinding")),
+		connect.WithHandlerOptions(opts...),
+	)
+	queryServiceListFindingEpisodesHandler := connect.NewUnaryHandler(
+		QueryServiceListFindingEpisodesProcedure,
+		svc.ListFindingEpisodes,
+		connect.WithSchema(queryServiceMethods.ByName("ListFindingEpisodes")),
+		connect.WithHandlerOptions(opts...),
+	)
+	queryServiceListFindingObservationsHandler := connect.NewUnaryHandler(
+		QueryServiceListFindingObservationsProcedure,
+		svc.ListFindingObservations,
+		connect.WithSchema(queryServiceMethods.ByName("ListFindingObservations")),
 		connect.WithHandlerOptions(opts...),
 	)
 	queryServiceGetServerConfigHandler := connect.NewUnaryHandler(
@@ -1404,6 +1622,10 @@ func NewQueryServiceHandler(svc QueryServiceHandler, opts ...connect.HandlerOpti
 			queryServiceListRunsHandler.ServeHTTP(w, r)
 		case QueryServiceListFindingsProcedure:
 			queryServiceListFindingsHandler.ServeHTTP(w, r)
+		case QueryServiceExportFindingsProcedure:
+			queryServiceExportFindingsHandler.ServeHTTP(w, r)
+		case QueryServiceCountFindingGroupsProcedure:
+			queryServiceCountFindingGroupsHandler.ServeHTTP(w, r)
 		case QueryServiceListAlertsProcedure:
 			queryServiceListAlertsHandler.ServeHTTP(w, r)
 		case QueryServiceEngineMetricsProcedure:
@@ -1430,6 +1652,12 @@ func NewQueryServiceHandler(svc QueryServiceHandler, opts ...connect.HandlerOpti
 			queryServiceGetWorkflowTypeHandler.ServeHTTP(w, r)
 		case QueryServiceListEphemeralRunsProcedure:
 			queryServiceListEphemeralRunsHandler.ServeHTTP(w, r)
+		case QueryServiceListEphemeralRunSummariesProcedure:
+			queryServiceListEphemeralRunSummariesHandler.ServeHTTP(w, r)
+		case QueryServiceDeleteEphemeralRunProcedure:
+			queryServiceDeleteEphemeralRunHandler.ServeHTTP(w, r)
+		case QueryServiceGetEphemeralRunSummaryProcedure:
+			queryServiceGetEphemeralRunSummaryHandler.ServeHTTP(w, r)
 		case QueryServiceEphemeralRunMetricsProcedure:
 			queryServiceEphemeralRunMetricsHandler.ServeHTTP(w, r)
 		case QueryServiceWorkerMetricsProcedure:
@@ -1444,8 +1672,14 @@ func NewQueryServiceHandler(svc QueryServiceHandler, opts ...connect.HandlerOpti
 			queryServiceListThresholdsHandler.ServeHTTP(w, r)
 		case QueryServiceGetFindingProcedure:
 			queryServiceGetFindingHandler.ServeHTTP(w, r)
-		case QueryServiceSetFindingStatusProcedure:
-			queryServiceSetFindingStatusHandler.ServeHTTP(w, r)
+		case QueryServiceSilenceFindingProcedure:
+			queryServiceSilenceFindingHandler.ServeHTTP(w, r)
+		case QueryServiceUnsilenceFindingProcedure:
+			queryServiceUnsilenceFindingHandler.ServeHTTP(w, r)
+		case QueryServiceListFindingEpisodesProcedure:
+			queryServiceListFindingEpisodesHandler.ServeHTTP(w, r)
+		case QueryServiceListFindingObservationsProcedure:
+			queryServiceListFindingObservationsHandler.ServeHTTP(w, r)
 		case QueryServiceGetServerConfigProcedure:
 			queryServiceGetServerConfigHandler.ServeHTTP(w, r)
 		case QueryServiceGetStoredDataProcedure:
@@ -1473,6 +1707,14 @@ func (UnimplementedQueryServiceHandler) ListRuns(context.Context, *connect.Reque
 
 func (UnimplementedQueryServiceHandler) ListFindings(context.Context, *connect.Request[v1.ListFindingsRequest]) (*connect.Response[v1.ListFindingsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.ListFindings is not implemented"))
+}
+
+func (UnimplementedQueryServiceHandler) ExportFindings(context.Context, *connect.Request[v1.ExportFindingsRequest]) (*connect.Response[v1.ExportFindingsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.ExportFindings is not implemented"))
+}
+
+func (UnimplementedQueryServiceHandler) CountFindingGroups(context.Context, *connect.Request[v1.CountFindingGroupsRequest]) (*connect.Response[v1.CountFindingGroupsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.CountFindingGroups is not implemented"))
 }
 
 func (UnimplementedQueryServiceHandler) ListAlerts(context.Context, *connect.Request[v1.ListAlertsRequest]) (*connect.Response[v1.ListAlertsResponse], error) {
@@ -1527,6 +1769,18 @@ func (UnimplementedQueryServiceHandler) ListEphemeralRuns(context.Context, *conn
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.ListEphemeralRuns is not implemented"))
 }
 
+func (UnimplementedQueryServiceHandler) ListEphemeralRunSummaries(context.Context, *connect.Request[v1.ListEphemeralRunSummariesRequest]) (*connect.Response[v1.ListEphemeralRunSummariesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.ListEphemeralRunSummaries is not implemented"))
+}
+
+func (UnimplementedQueryServiceHandler) DeleteEphemeralRun(context.Context, *connect.Request[v1.DeleteEphemeralRunRequest]) (*connect.Response[v1.DeleteEphemeralRunResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.DeleteEphemeralRun is not implemented"))
+}
+
+func (UnimplementedQueryServiceHandler) GetEphemeralRunSummary(context.Context, *connect.Request[v1.GetEphemeralRunSummaryRequest]) (*connect.Response[v1.GetEphemeralRunSummaryResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.GetEphemeralRunSummary is not implemented"))
+}
+
 func (UnimplementedQueryServiceHandler) EphemeralRunMetrics(context.Context, *connect.Request[v1.EphemeralRunMetricsRequest]) (*connect.Response[v1.EphemeralRunMetricsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.EphemeralRunMetrics is not implemented"))
 }
@@ -1555,8 +1809,20 @@ func (UnimplementedQueryServiceHandler) GetFinding(context.Context, *connect.Req
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.GetFinding is not implemented"))
 }
 
-func (UnimplementedQueryServiceHandler) SetFindingStatus(context.Context, *connect.Request[v1.SetFindingStatusRequest]) (*connect.Response[v1.SetFindingStatusResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.SetFindingStatus is not implemented"))
+func (UnimplementedQueryServiceHandler) SilenceFinding(context.Context, *connect.Request[v1.SilenceFindingRequest]) (*connect.Response[v1.SilenceFindingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.SilenceFinding is not implemented"))
+}
+
+func (UnimplementedQueryServiceHandler) UnsilenceFinding(context.Context, *connect.Request[v1.UnsilenceFindingRequest]) (*connect.Response[v1.UnsilenceFindingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.UnsilenceFinding is not implemented"))
+}
+
+func (UnimplementedQueryServiceHandler) ListFindingEpisodes(context.Context, *connect.Request[v1.ListFindingEpisodesRequest]) (*connect.Response[v1.ListFindingEpisodesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.ListFindingEpisodes is not implemented"))
+}
+
+func (UnimplementedQueryServiceHandler) ListFindingObservations(context.Context, *connect.Request[v1.ListFindingObservationsRequest]) (*connect.Response[v1.ListFindingObservationsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("flowrensic.v1.QueryService.ListFindingObservations is not implemented"))
 }
 
 func (UnimplementedQueryServiceHandler) GetServerConfig(context.Context, *connect.Request[v1.GetServerConfigRequest]) (*connect.Response[v1.GetServerConfigResponse], error) {

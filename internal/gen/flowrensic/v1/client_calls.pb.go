@@ -536,8 +536,8 @@ const file_flowrensic_v1_client_calls_proto_rawDesc = "" +
 	"\x11ClientCallOutcome\x12#\n" +
 	"\x1fCLIENT_CALL_OUTCOME_UNSPECIFIED\x10\x00\x12\x1e\n" +
 	"\x1aCLIENT_CALL_OUTCOME_FAILED\x10\x01\x12!\n" +
-	"\x1dCLIENT_CALL_OUTCOME_TIMED_OUT\x10\x02B\xb9\x01\n" +
-	"\x11com.flowrensic.v1B\x10ClientCallsProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x1dCLIENT_CALL_OUTCOME_TIMED_OUT\x10\x02B\xd0\x01\n" +
+	"\x11com.flowrensic.v1B\x10ClientCallsProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_client_calls_proto_rawDescOnce sync.Once

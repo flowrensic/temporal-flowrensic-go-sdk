@@ -23,7 +23,7 @@ const (
 )
 
 // RunStatus is what the engine reports a run as. It is also the thing that
-// lies: a wedged run reports RUNNING forever. Findings, not status, carry a
+// lies: a stuck run reports RUNNING forever. Findings, not status, carry a
 // verdict.
 type RunStatus int32
 
@@ -497,7 +497,10 @@ type ReplayResult struct {
 	WorkflowInterceptors *WorkflowInterceptors `protobuf:"bytes,7,opt,name=workflow_interceptors,json=workflowInterceptors,proto3" json:"workflow_interceptors,omitempty"`
 	// The env the result was sent for. Set by the server on a list, and not
 	// read on ingest, which takes the env of the request.
-	Env           string `protobuf:"bytes,8,opt,name=env,proto3" json:"env,omitempty"`
+	Env string `protobuf:"bytes,8,opt,name=env,proto3" json:"env,omitempty"`
+	// The ephemeral run that sent it. Set by the server on a list, and not read
+	// on ingest, which takes the ephemeral run of the request.
+	EphemeralRun  string `protobuf:"bytes,9,opt,name=ephemeral_run,json=ephemeralRun,proto3" json:"ephemeral_run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -584,6 +587,13 @@ func (x *ReplayResult) GetWorkflowInterceptors() *WorkflowInterceptors {
 func (x *ReplayResult) GetEnv() string {
 	if x != nil {
 		return x.Env
+	}
+	return ""
+}
+
+func (x *ReplayResult) GetEphemeralRun() string {
+	if x != nil {
+		return x.EphemeralRun
 	}
 	return ""
 }
@@ -944,7 +954,12 @@ func (x *ReplayRequest) GetResultsFailed() int32 {
 type ListReplayRequestsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The page of the list asked for.
-	Page          *PageRequest `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
+	Page *PageRequest `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
+	// env and ephemeral_run keep only the records of that ephemeral run, the
+	// env matched in any case. Both empty keep every record. One without the
+	// other is invalid.
+	Env           string `protobuf:"bytes,2,opt,name=env,proto3" json:"env,omitempty"`
+	EphemeralRun  string `protobuf:"bytes,3,opt,name=ephemeral_run,json=ephemeralRun,proto3" json:"ephemeral_run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -986,11 +1001,26 @@ func (x *ListReplayRequestsRequest) GetPage() *PageRequest {
 	return nil
 }
 
+func (x *ListReplayRequestsRequest) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
+func (x *ListReplayRequestsRequest) GetEphemeralRun() string {
+	if x != nil {
+		return x.EphemeralRun
+	}
+	return ""
+}
+
 type ListReplayRequestsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// requests are the newest records, newest first, at most 200.
 	Requests []*ReplayRequest `protobuf:"bytes,1,rep,name=requests,proto3" json:"requests,omitempty"`
-	// held is how many records Flowrensic holds.
+	// held is how many records Flowrensic holds, of the run asked for when one
+	// is.
 	Held int64 `protobuf:"varint,2,opt,name=held,proto3" json:"held,omitempty"`
 	// Whether the list goes on after this page, and how to ask for the next.
 	Page          *PageResponse `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
@@ -1133,7 +1163,13 @@ func (x *ReplaySetCount) GetLeftOut() int32 {
 type ListReplaySetsRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// The page of the list asked for.
-	Page          *PageRequest `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
+	Page *PageRequest `protobuf:"bytes,1,opt,name=page,proto3" json:"page,omitempty"`
+	// env keeps only the counts of that env, matched in any case. Empty is
+	// every env, FPP-134-R09.
+	Env string `protobuf:"bytes,2,opt,name=env,proto3" json:"env,omitempty"`
+	// worker_name keeps only the types that worker runs, matched as written,
+	// in the env when env is set. Empty is every type, FPP-134-R09.
+	WorkerName    string `protobuf:"bytes,3,opt,name=worker_name,json=workerName,proto3" json:"worker_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1175,6 +1211,20 @@ func (x *ListReplaySetsRequest) GetPage() *PageRequest {
 	return nil
 }
 
+func (x *ListReplaySetsRequest) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
+}
+
+func (x *ListReplaySetsRequest) GetWorkerName() string {
+	if x != nil {
+		return x.WorkerName
+	}
+	return ""
+}
+
 type ListReplaySetsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// sets is one entry per workflow type and env with a run open or closed in
@@ -1183,7 +1233,10 @@ type ListReplaySetsResponse struct {
 	// envs are the registered envs, in the order of the env list.
 	Envs []string `protobuf:"bytes,2,rep,name=envs,proto3" json:"envs,omitempty"`
 	// Whether the list goes on after this page, and how to ask for the next.
-	Page          *PageResponse `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	Page *PageResponse `protobuf:"bytes,3,opt,name=page,proto3" json:"page,omitempty"`
+	// worker_names is every worker name seen on a queue of the env asked
+	// for, of every env when it is empty, sorted, whatever worker_name asks for.
+	WorkerNames   []string `protobuf:"bytes,4,rep,name=worker_names,json=workerNames,proto3" json:"worker_names,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1235,6 +1288,13 @@ func (x *ListReplaySetsResponse) GetEnvs() []string {
 func (x *ListReplaySetsResponse) GetPage() *PageResponse {
 	if x != nil {
 		return x.Page
+	}
+	return nil
+}
+
+func (x *ListReplaySetsResponse) GetWorkerNames() []string {
+	if x != nil {
+		return x.WorkerNames
 	}
 	return nil
 }
@@ -1373,7 +1433,11 @@ type GetReplaySetRequest struct {
 	state        protoimpl.MessageState `protogen:"open.v1"`
 	WorkflowType string                 `protobuf:"bytes,1,opt,name=workflow_type,json=workflowType,proto3" json:"workflow_type,omitempty"`
 	// The page of the list asked for.
-	Page          *PageRequest `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	Page *PageRequest `protobuf:"bytes,2,opt,name=page,proto3" json:"page,omitempty"`
+	// env keeps only the histories, the runs left out and the runs in
+	// quarantine of that env, matched in any case. Empty is every env,
+	// FPP-134-R09.
+	Env           string `protobuf:"bytes,3,opt,name=env,proto3" json:"env,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1420,6 +1484,13 @@ func (x *GetReplaySetRequest) GetPage() *PageRequest {
 		return x.Page
 	}
 	return nil
+}
+
+func (x *GetReplaySetRequest) GetEnv() string {
+	if x != nil {
+		return x.Env
+	}
+	return ""
 }
 
 type GetReplaySetResponse struct {
@@ -1714,7 +1785,7 @@ const file_flowrensic_v1_replay_proto_rawDesc = "" +
 	"\bleft_out\x18\x02 \x03(\v2\x1d.flowrensic.v1.LeftOutHistoryR\aleftOut\x12/\n" +
 	"\x04page\x18\x03 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\",\n" +
 	"\x14WorkflowInterceptors\x12\x14\n" +
-	"\x05names\x18\x01 \x03(\tR\x05names\"\xc4\x02\n" +
+	"\x05names\x18\x01 \x03(\tR\x05names\"\xe9\x02\n" +
 	"\fReplayResult\x12\x15\n" +
 	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12!\n" +
 	"\fcode_version\x18\x02 \x01(\tR\vcodeVersion\x12\x16\n" +
@@ -1724,7 +1795,8 @@ const file_flowrensic_v1_replay_proto_rawDesc = "" +
 	"\vreplayed_at\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"replayedAt\x12X\n" +
 	"\x15workflow_interceptors\x18\a \x01(\v2#.flowrensic.v1.WorkflowInterceptorsR\x14workflowInterceptors\x12\x10\n" +
-	"\x03env\x18\b \x01(\tR\x03env\"f\n" +
+	"\x03env\x18\b \x01(\tR\x03env\x12#\n" +
+	"\rephemeral_run\x18\t \x01(\tR\fephemeralRun\"f\n" +
 	"\x1aIngestReplayResultsRequest\x125\n" +
 	"\aresults\x18\x01 \x03(\v2\x1b.flowrensic.v1.ReplayResultR\aresultsJ\x04\b\x02\x10\x03R\vcurrent_env\"Q\n" +
 	"\x1bIngestReplayResultsResponse\x12\x1a\n" +
@@ -1753,9 +1825,11 @@ const file_flowrensic_v1_replay_proto_rawDesc = "" +
 	" \x01(\tR\ffetchedByEnv\x127\n" +
 	"\x18fetched_by_ephemeral_run\x18\v \x01(\tR\x15fetchedByEphemeralRun\x12%\n" +
 	"\x0eresults_passed\x18\f \x01(\x05R\rresultsPassed\x12%\n" +
-	"\x0eresults_failed\x18\r \x01(\x05R\rresultsFailedJ\x04\b\x04\x10\x05R\fcode_version\"K\n" +
+	"\x0eresults_failed\x18\r \x01(\x05R\rresultsFailedJ\x04\b\x04\x10\x05R\fcode_version\"\x82\x01\n" +
 	"\x19ListReplayRequestsRequest\x12.\n" +
-	"\x04page\x18\x01 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\x9b\x01\n" +
+	"\x04page\x18\x01 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\x12\x10\n" +
+	"\x03env\x18\x02 \x01(\tR\x03env\x12#\n" +
+	"\rephemeral_run\x18\x03 \x01(\tR\fephemeralRun\"\x9b\x01\n" +
 	"\x1aListReplayRequestsResponse\x128\n" +
 	"\brequests\x18\x01 \x03(\v2\x1c.flowrensic.v1.ReplayRequestR\brequests\x12\x12\n" +
 	"\x04held\x18\x02 \x01(\x03R\x04held\x12/\n" +
@@ -1765,13 +1839,17 @@ const file_flowrensic_v1_replay_proto_rawDesc = "" +
 	"\x03env\x18\x02 \x01(\tR\x03env\x12\x1c\n" +
 	"\thistories\x18\x03 \x01(\x05R\thistories\x12 \n" +
 	"\vquarantined\x18\x04 \x01(\x05R\vquarantined\x12\x19\n" +
-	"\bleft_out\x18\x05 \x01(\x05R\aleftOut\"G\n" +
+	"\bleft_out\x18\x05 \x01(\x05R\aleftOut\"z\n" +
 	"\x15ListReplaySetsRequest\x12.\n" +
-	"\x04page\x18\x01 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\x90\x01\n" +
+	"\x04page\x18\x01 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\x12\x10\n" +
+	"\x03env\x18\x02 \x01(\tR\x03env\x12\x1f\n" +
+	"\vworker_name\x18\x03 \x01(\tR\n" +
+	"workerName\"\xb3\x01\n" +
 	"\x16ListReplaySetsResponse\x121\n" +
 	"\x04sets\x18\x01 \x03(\v2\x1d.flowrensic.v1.ReplaySetCountR\x04sets\x12\x12\n" +
 	"\x04envs\x18\x02 \x03(\tR\x04envs\x12/\n" +
-	"\x04page\x18\x03 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\"\xb1\x03\n" +
+	"\x04page\x18\x03 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\x12!\n" +
+	"\fworker_names\x18\x04 \x03(\tR\vworkerNames\"\xb1\x03\n" +
 	"\x12QuarantinedHistory\x12\x15\n" +
 	"\x06run_id\x18\x01 \x01(\tR\x05runId\x12#\n" +
 	"\rworkflow_type\x18\x02 \x01(\tR\fworkflowType\x12\x10\n" +
@@ -1785,10 +1863,11 @@ const file_flowrensic_v1_replay_proto_rawDesc = "" +
 	"\x0equarantined_at\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\rquarantinedAt\x12\x10\n" +
 	"\x03url\x18\n" +
 	" \x01(\tR\x03url\x12&\n" +
-	"\x0ftemporal_ui_url\x18\v \x01(\tR\rtemporalUiUrl\"j\n" +
+	"\x0ftemporal_ui_url\x18\v \x01(\tR\rtemporalUiUrl\"|\n" +
 	"\x13GetReplaySetRequest\x12#\n" +
 	"\rworkflow_type\x18\x01 \x01(\tR\fworkflowType\x12.\n" +
-	"\x04page\x18\x02 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\x82\x02\n" +
+	"\x04page\x18\x02 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\x12\x10\n" +
+	"\x03env\x18\x03 \x01(\tR\x03env\"\x82\x02\n" +
 	"\x14GetReplaySetResponse\x12:\n" +
 	"\thistories\x18\x01 \x03(\v2\x1c.flowrensic.v1.ReplayHistoryR\thistories\x128\n" +
 	"\bleft_out\x18\x02 \x03(\v2\x1d.flowrensic.v1.LeftOutHistoryR\aleftOut\x12C\n" +
@@ -1812,8 +1891,8 @@ const file_flowrensic_v1_replay_proto_rawDesc = "" +
 	"\x15RUN_STATUS_TERMINATED\x10\x05\x12\x18\n" +
 	"\x14RUN_STATUS_TIMED_OUT\x10\x06\x12\x1f\n" +
 	"\x1bRUN_STATUS_CONTINUED_AS_NEW\x10\a\x12\x15\n" +
-	"\x11RUN_STATUS_PAUSED\x10\bB\xb4\x01\n" +
-	"\x11com.flowrensic.v1B\vReplayProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x11RUN_STATUS_PAUSED\x10\bB\xcb\x01\n" +
+	"\x11com.flowrensic.v1B\vReplayProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_replay_proto_rawDescOnce sync.Once

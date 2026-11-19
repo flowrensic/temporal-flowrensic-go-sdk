@@ -427,8 +427,8 @@ const file_flowrensic_v1_workflow_history_proto_rawDesc = "" +
 	"\x1bEVENT_KIND_UPDATE_COMPLETED\x10\x12\x12%\n" +
 	"!EVENT_KIND_CHILD_WORKFLOW_STARTED\x10\x13\x12\x1e\n" +
 	"\x1aEVENT_KIND_MARKER_RECORDED\x10\x14\x12\x1e\n" +
-	"\x1aEVENT_KIND_WORKFLOW_CLOSED\x10\x15B\xbd\x01\n" +
-	"\x11com.flowrensic.v1B\x14WorkflowHistoryProtoP\x01Z=go.flowrensic.com/sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x1aEVENT_KIND_WORKFLOW_CLOSED\x10\x15B\xd4\x01\n" +
+	"\x11com.flowrensic.v1B\x14WorkflowHistoryProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_workflow_history_proto_rawDescOnce sync.Once
