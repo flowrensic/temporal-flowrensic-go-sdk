@@ -1,4 +1,4 @@
-package client
+package worker
 
 import (
 	"errors"
@@ -28,10 +28,10 @@ func TestFPP140C56InterceptorNames(t *testing.T) {
 	if got := InterceptorNames(&MetricsInterceptor{}, MetricsInterceptor{}); !reflect.DeepEqual(got, []string{"MetricsInterceptor", "MetricsInterceptor"}) {
 		t.Errorf("InterceptorNames = %v", got)
 	}
-	if interceptorList(nil) != nil {
+	if InterceptorList(nil) != nil {
 		t.Error("no list sent a list")
 	}
-	if got := interceptorList([]string{}); got == nil || len(got.GetNames()) != 0 {
+	if got := InterceptorList([]string{}); got == nil || len(got.GetNames()) != 0 {
 		t.Errorf("an empty list = %v", got)
 	}
 }

@@ -1177,8 +1177,8 @@ const file_flowrensic_v1_workflow_types_proto_rawDesc = "" +
 	"\n" +
 	"finding_id\x18\x01 \x01(\tR\tfindingId\x12\x1a\n" +
 	"\bepisodes\x18\x02 \x01(\x05R\bepisodes\x12\"\n" +
-	"\fobservations\x18\x03 \x01(\x05R\fobservationsB\xd2\x01\n" +
-	"\x11com.flowrensic.v1B\x12WorkflowTypesProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\fobservations\x18\x03 \x01(\x05R\fobservationsB\xb7\x01\n" +
+	"\x11com.flowrensic.v1B\x12WorkflowTypesProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_workflow_types_proto_rawDescOnce sync.Once

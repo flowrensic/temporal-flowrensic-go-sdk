@@ -250,8 +250,8 @@ const file_flowrensic_v1_job_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"P\n" +
 	"\x0eRunJobResponse\x12\x10\n" +
 	"\x03job\x18\x01 \x01(\tR\x03job\x12,\n" +
-	"\x05parts\x18\x02 \x03(\v2\x16.flowrensic.v1.JobPartR\x05partsB\xc8\x01\n" +
-	"\x11com.flowrensic.v1B\bJobProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x05parts\x18\x02 \x03(\v2\x16.flowrensic.v1.JobPartR\x05partsB\xad\x01\n" +
+	"\x11com.flowrensic.v1B\bJobProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_job_proto_rawDescOnce sync.Once

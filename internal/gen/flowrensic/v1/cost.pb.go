@@ -652,8 +652,8 @@ const file_flowrensic_v1_cost_proto_rawDesc = "" +
 	"\rby_event_type\x18\x06 \x03(\v2\x1f.flowrensic.v1.CostEventTypeRowR\vbyEventType\x12&\n" +
 	"\fskipped_runs\x18\a \x01(\x03H\x00R\vskippedRuns\x88\x01\x01\x12/\n" +
 	"\x04page\x18\b \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04pageB\x0f\n" +
-	"\r_skipped_runsB\xc9\x01\n" +
-	"\x11com.flowrensic.v1B\tCostProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\r_skipped_runsB\xae\x01\n" +
+	"\x11com.flowrensic.v1B\tCostProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_cost_proto_rawDescOnce sync.Once

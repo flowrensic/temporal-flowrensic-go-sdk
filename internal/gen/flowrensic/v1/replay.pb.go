@@ -1891,8 +1891,8 @@ const file_flowrensic_v1_replay_proto_rawDesc = "" +
 	"\x15RUN_STATUS_TERMINATED\x10\x05\x12\x18\n" +
 	"\x14RUN_STATUS_TIMED_OUT\x10\x06\x12\x1f\n" +
 	"\x1bRUN_STATUS_CONTINUED_AS_NEW\x10\a\x12\x15\n" +
-	"\x11RUN_STATUS_PAUSED\x10\bB\xcb\x01\n" +
-	"\x11com.flowrensic.v1B\vReplayProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x11RUN_STATUS_PAUSED\x10\bB\xb0\x01\n" +
+	"\x11com.flowrensic.v1B\vReplayProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_replay_proto_rawDescOnce sync.Once

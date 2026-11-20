@@ -158,8 +158,8 @@ const file_flowrensic_v1_page_proto_rawDesc = "" +
 	"\fPageResponse\x12&\n" +
 	"\x0fnext_page_token\x18\x01 \x01(\tR\rnextPageToken\x12\x12\n" +
 	"\x04more\x18\x02 \x01(\bR\x04more\x12\x10\n" +
-	"\x03cut\x18\x03 \x01(\bR\x03cutB\xc9\x01\n" +
-	"\x11com.flowrensic.v1B\tPageProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x03cut\x18\x03 \x01(\bR\x03cutB\xae\x01\n" +
+	"\x11com.flowrensic.v1B\tPageProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_page_proto_rawDescOnce sync.Once

@@ -17,8 +17,10 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"go.flowrensic.com/temporal-flowrensic-go-sdk/internal/buffer"
+	"go.flowrensic.com/temporal-flowrensic-go-sdk/internal/engine"
 	flowrensicv1 "go.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1"
 	"go.flowrensic.com/temporal-flowrensic-go-sdk/internal/transport"
+	"go.flowrensic.com/temporal-flowrensic-go-sdk/internal/worker"
 )
 
 // ClientCall is one query or signal of a Temporal client that failed.
@@ -68,6 +70,7 @@ func NewClientInterceptor(options ClientInterceptorOptions) *ClientInterceptor {
 		EnvAccessKey:        options.EnvAccessKey,
 		CurrentEphemeralRun: options.CurrentEphemeralRun,
 		HTTPClient:          options.HTTPClient,
+		Tag:                 engine.Tag(),
 	})
 	namespace := options.Namespace
 	if namespace == "" {
@@ -84,7 +87,7 @@ func NewClientInterceptor(options ClientInterceptorOptions) *ClientInterceptor {
 			},
 			EnvOf:  func(*ClientCall) string { return options.CurrentEnv },
 			SizeOf: func(c *ClientCall) int { return buffer.ApproxSize(c) },
-		}, options.Buffer.internal()),
+		}, worker.BufferConfig(options.Buffer)),
 	}
 }
 

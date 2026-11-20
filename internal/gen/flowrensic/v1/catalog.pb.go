@@ -808,8 +808,8 @@ const file_flowrensic_v1_catalog_proto_rawDesc = "" +
 	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page*\xa3\x01\n" +
 	"\x06Engine\x12\x16\n" +
 	"\x12ENGINE_UNSPECIFIED\x10\x00\x12\x13\n" +
-	"\x0fENGINE_TEMPORAL\x10\x01\"\x04\b\x02\x10\a*\x0eENGINE_CADENCE*\x0eENGINE_RESTATE*\vENGINE_DBOS*\x0eENGINE_INNGEST*\x12ENGINE_TRIGGER_DEV*\x15ENGINE_STEP_FUNCTIONSB\xcc\x01\n" +
-	"\x11com.flowrensic.v1B\fCatalogProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x0fENGINE_TEMPORAL\x10\x01\"\x04\b\x02\x10\a*\x0eENGINE_CADENCE*\x0eENGINE_RESTATE*\vENGINE_DBOS*\x0eENGINE_INNGEST*\x12ENGINE_TRIGGER_DEV*\x15ENGINE_STEP_FUNCTIONSB\xb1\x01\n" +
+	"\x11com.flowrensic.v1B\fCatalogProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_catalog_proto_rawDescOnce sync.Once

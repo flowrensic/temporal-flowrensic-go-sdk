@@ -2187,8 +2187,8 @@ const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
 	"\x03run\x18\x01 \x01(\v2\".flowrensic.v1.EphemeralRunSummaryR\x03run\x12\x18\n" +
 	"\aoutcome\x18\x02 \x01(\tR\aoutcome\x125\n" +
 	"\aresults\x18\x03 \x03(\v2\x1b.flowrensic.v1.ReplayResultR\aresults\x12/\n" +
-	"\x04page\x18\x04 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04pageB\xd1\x01\n" +
-	"\x11com.flowrensic.v1B\x11EphemeralRunProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x04page\x18\x04 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04pageB\xb6\x01\n" +
+	"\x11com.flowrensic.v1B\x11EphemeralRunProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_ephemeral_run_proto_rawDescOnce sync.Once

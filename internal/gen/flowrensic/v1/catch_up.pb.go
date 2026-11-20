@@ -399,8 +399,8 @@ const file_flowrensic_v1_catch_up_proto_rawDesc = "" +
 	"\n" +
 	"\b_backlogB\x0f\n" +
 	"\r_percent_doneB\b\n" +
-	"\x06_totalB\xcc\x01\n" +
-	"\x11com.flowrensic.v1B\fCatchUpProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x06_totalB\xb1\x01\n" +
+	"\x11com.flowrensic.v1B\fCatchUpProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_catch_up_proto_rawDescOnce sync.Once

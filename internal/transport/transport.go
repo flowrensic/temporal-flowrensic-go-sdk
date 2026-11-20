@@ -19,44 +19,34 @@ const (
 	EnvAccessKeyHeader        = "Flowrensic-Env-Access-Key"
 	CurrentEphemeralRunHeader = "Flowrensic-Current-Ephemeral-Run"
 	SdkHeader                 = "Flowrensic-Sdk"
-	TemporalSdkHeader         = "Flowrensic-Temporal-Sdk"
 	WorkerIDHeader            = "Flowrensic-Worker-Id"
 )
 
-const modulePath = "go.flowrensic.com/temporal-flowrensic-go-sdk"
+// Tag is what every call says about the SDK that makes it: the SDK header
+// value, such as go/1.2.3, and the engine's own header, such as the version of
+// the engine's SDK. An empty EngineValue sends no engine header.
+type Tag struct {
+	Sdk          string
+	EngineHeader string
+	EngineValue  string
+}
 
-const temporalModulePath = "go.temporal.io/sdk"
-
-// SdkHeaderValue is go, a slash and the version of this SDK: the tag of the
-// module in the build info of the program, dev when the module has no version
-// there or is replaced by a folder.
-var SdkHeaderValue = "go/" + sdkVersion()
-
-func sdkVersion() string {
-	v := moduleVersion(modulePath)
+// SdkVersion is the version of the module path in the build info of the
+// program, dev when the module has no version there or is replaced by a
+// folder.
+func SdkVersion(path string) string {
+	v := ModuleVersion(path)
 	if v == "" || v == "(devel)" || strings.HasPrefix(v, "0.0.0") {
 		return "dev"
 	}
 	return v
 }
 
-// TemporalSdkHeaderValue is the version of go.temporal.io/sdk in the build
-// info of the program, with no leading v, empty when it is not known.
-var TemporalSdkHeaderValue = temporalSdkVersion()
-
-func temporalSdkVersion() string {
-	v := moduleVersion(temporalModulePath)
-	if v == "(devel)" {
-		return ""
-	}
-	return v
-}
-
-// moduleVersion is the version of the module path in the build info of the
+// ModuleVersion is the version of the module path in the build info of the
 // program, with no leading v: the version of its replacement when it is
 // replaced, empty when the program has no build info, does not hold the
 // module, or replaces it by a folder.
-func moduleVersion(path string) string {
+func ModuleVersion(path string) string {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		return ""
@@ -83,6 +73,8 @@ type Context struct {
 	// WorkerID is sent on every call of a worker.
 	WorkerID   string
 	HTTPClient *http.Client
+	// Tag names the SDK and its engine on every call.
+	Tag Tag
 }
 
 // Clients are the clients of the Flowrensic services the SDK calls.
@@ -105,7 +97,7 @@ func New(c Context) Clients {
 	}
 }
 
-// headers puts the SDK, the Temporal SDK when known, and the env, its access
+// headers puts the SDK, the engine tag when it has a value, and the env, its access
 // key, the ephemeral run and the worker id of c in the headers of every call.
 func headers(c Context) connect.UnaryInterceptorFunc {
 	set := [][2]string{
@@ -116,9 +108,9 @@ func headers(c Context) connect.UnaryInterceptorFunc {
 	}
 	return func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			req.Header().Set(SdkHeader, SdkHeaderValue)
-			if TemporalSdkHeaderValue != "" {
-				req.Header().Set(TemporalSdkHeader, TemporalSdkHeaderValue)
+			req.Header().Set(SdkHeader, c.Tag.Sdk)
+			if c.Tag.EngineHeader != "" && c.Tag.EngineValue != "" {
+				req.Header().Set(c.Tag.EngineHeader, c.Tag.EngineValue)
 			}
 			for _, h := range set {
 				if h[1] != "" {

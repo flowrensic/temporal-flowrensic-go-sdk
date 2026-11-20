@@ -1665,8 +1665,8 @@ const file_flowrensic_v1_activity_metrics_proto_rawDesc = "" +
 	"\x11OUTCOME_COMPLETED\x10\x01\x12\x12\n" +
 	"\x0eOUTCOME_FAILED\x10\x02\x12\x15\n" +
 	"\x11OUTCOME_TIMED_OUT\x10\x03\x12\x14\n" +
-	"\x10OUTCOME_CANCELED\x10\x04B\xd4\x01\n" +
-	"\x11com.flowrensic.v1B\x14ActivityMetricsProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x10OUTCOME_CANCELED\x10\x04B\xb9\x01\n" +
+	"\x11com.flowrensic.v1B\x14ActivityMetricsProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_activity_metrics_proto_rawDescOnce sync.Once

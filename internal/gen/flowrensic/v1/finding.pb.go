@@ -2880,8 +2880,8 @@ const file_flowrensic_v1_finding_proto_rawDesc = "" +
 	"\rFindingStatus\x12\x1e\n" +
 	"\x1aFINDING_STATUS_UNSPECIFIED\x10\x00\x12\x19\n" +
 	"\x15FINDING_STATUS_ACTIVE\x10\x01\x12\x18\n" +
-	"\x14FINDING_STATUS_QUIET\x10\x03\"\x04\b\x02\x10\x02*\x17FINDING_STATUS_ARCHIVEDB\xcc\x01\n" +
-	"\x11com.flowrensic.v1B\fFindingProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x14FINDING_STATUS_QUIET\x10\x03\"\x04\b\x02\x10\x02*\x17FINDING_STATUS_ARCHIVEDB\xb1\x01\n" +
+	"\x11com.flowrensic.v1B\fFindingProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_finding_proto_rawDescOnce sync.Once

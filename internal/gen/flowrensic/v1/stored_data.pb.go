@@ -298,8 +298,8 @@ const file_flowrensic_v1_stored_data_proto_rawDesc = "" +
 	"\x15GetStoredDataResponse\x12/\n" +
 	"\x05kinds\x18\x01 \x03(\v2\x19.flowrensic.v1.StoredKindR\x05kinds\x12,\n" +
 	"\x03now\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x03now\x12,\n" +
-	"\x04envs\x18\x03 \x03(\v2\x18.flowrensic.v1.StoredEnvR\x04envsB\xcf\x01\n" +
-	"\x11com.flowrensic.v1B\x0fStoredDataProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x04envs\x18\x03 \x03(\v2\x18.flowrensic.v1.StoredEnvR\x04envsB\xb4\x01\n" +
+	"\x11com.flowrensic.v1B\x0fStoredDataProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_stored_data_proto_rawDescOnce sync.Once

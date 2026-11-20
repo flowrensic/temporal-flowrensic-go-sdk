@@ -16,6 +16,7 @@ import (
 
 	"go.flowrensic.com/temporal-flowrensic-go-sdk/client"
 	"go.flowrensic.com/temporal-flowrensic-go-sdk/internal/buffer"
+	"go.flowrensic.com/temporal-flowrensic-go-sdk/internal/engine"
 	flowrensicv1 "go.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1"
 	"go.flowrensic.com/temporal-flowrensic-go-sdk/internal/transport"
 )
@@ -63,6 +64,7 @@ func NewQueryInterceptor(options QueryOptions) *QueryInterceptor {
 		EnvAccessKey:        options.EnvAccessKey,
 		CurrentEphemeralRun: options.CurrentEphemeralRun,
 		HTTPClient:          options.HTTPClient,
+		Tag:                 engine.Tag(),
 	})
 	b := buffer.New(buffer.Target[answered]{
 		Send: func(ctx context.Context, records []answered, id buffer.SendID) error {

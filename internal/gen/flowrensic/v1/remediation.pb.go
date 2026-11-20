@@ -945,8 +945,8 @@ const file_flowrensic_v1_remediation_proto_rawDesc = "" +
 	"\x1eREMEDIATION_OPTION_UNSPECIFIED\x10\x00\x12 \n" +
 	"\x1cREMEDIATION_OPTION_TERMINATE\x10\x01\x12\x1d\n" +
 	"\x19REMEDIATION_OPTION_CANCEL\x10\x02\x12\x1c\n" +
-	"\x18REMEDIATION_OPTION_RESET\x10\x03B\xd0\x01\n" +
-	"\x11com.flowrensic.v1B\x10RemediationProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x18REMEDIATION_OPTION_RESET\x10\x03B\xb5\x01\n" +
+	"\x11com.flowrensic.v1B\x10RemediationProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_remediation_proto_rawDescOnce sync.Once

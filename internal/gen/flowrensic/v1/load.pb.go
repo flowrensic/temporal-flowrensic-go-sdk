@@ -747,8 +747,8 @@ const file_flowrensic_v1_load_proto_rawDesc = "" +
 	"\fslow_queries\x18\x04 \x01(\x05R\vslowQueries\x121\n" +
 	"\x15disk_reads_per_second\x18\x05 \x01(\x01R\x12diskReadsPerSecond\x12%\n" +
 	"\x0eactive_percent\x18\x06 \x01(\x01R\ractivePercent\x12\x14\n" +
-	"\x05cores\x18\b \x01(\x01R\x05coresJ\x04\b\a\x10\bR\x12disk_reads_percentB\xc9\x01\n" +
-	"\x11com.flowrensic.v1B\tLoadProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x05cores\x18\b \x01(\x01R\x05coresJ\x04\b\a\x10\bR\x12disk_reads_percentB\xae\x01\n" +
+	"\x11com.flowrensic.v1B\tLoadProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_load_proto_rawDescOnce sync.Once

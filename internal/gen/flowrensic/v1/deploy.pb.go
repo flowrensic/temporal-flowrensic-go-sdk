@@ -578,8 +578,8 @@ const file_flowrensic_v1_deploy_proto_rawDesc = "" +
 	"\x1bDeployAttemptCountsResponse\x12\x16\n" +
 	"\x06normal\x18\x01 \x01(\x05R\x06normal\x12\x18\n" +
 	"\arollout\x18\x02 \x01(\x05R\arollout\x12\x12\n" +
-	"\x04test\x18\x03 \x01(\x05R\x04testB\xcb\x01\n" +
-	"\x11com.flowrensic.v1B\vDeployProtoP\x01ZTgo.flowrensic.com/temporal-flowrensic-go-sdk/internal/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
+	"\x04test\x18\x03 \x01(\x05R\x04testB\xb0\x01\n" +
+	"\x11com.flowrensic.v1B\vDeployProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
 	file_flowrensic_v1_deploy_proto_rawDescOnce sync.Once
