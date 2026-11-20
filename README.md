@@ -1,7 +1,5 @@
 # Flowrensic Go SDK
 
-Pre-release. This package is an early preview and not ready for production. Its API can change in any version.
-
 Flowrensic runs beside your durable workflow engine and finds problems in your workflows. This is the Go SDK of Temporal Flowrensic, the edition for Temporal.
 
 ## What it does today
