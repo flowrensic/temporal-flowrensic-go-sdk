@@ -90,7 +90,8 @@ func New(c Context) Clients {
 		httpClient = http.DefaultClient
 	}
 	base := strings.TrimRight(c.ServerBaseURL, "/")
-	opts := connect.WithInterceptors(headers(c))
+	httpClient = withRetryAfter(httpClient)
+	opts := connect.WithInterceptors(headers(c), retryAfterOfAnswer())
 	return Clients{
 		Ingest: flowrensicv1connect.NewIngestServiceClient(httpClient, base, opts),
 		Query:  flowrensicv1connect.NewQueryServiceClient(httpClient, base, opts),

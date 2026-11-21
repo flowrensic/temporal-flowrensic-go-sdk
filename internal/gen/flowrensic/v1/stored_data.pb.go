@@ -221,7 +221,15 @@ type GetStoredDataResponse struct {
 	// The server's time when it answered.
 	Now *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=now,proto3" json:"now,omitempty"`
 	// Every kind per env, one entry per env in the env list, in its order.
-	Envs          []*StoredEnv `protobuf:"bytes,3,rep,name=envs,proto3" json:"envs,omitempty"`
+	Envs []*StoredEnv `protobuf:"bytes,3,rep,name=envs,proto3" json:"envs,omitempty"`
+	// The size of the store on disk, the database and the history files, read
+	// when the server answered. Zero when the store cannot say its size.
+	DiskBytes int64 `protobuf:"varint,4,opt,name=disk_bytes,json=diskBytes,proto3" json:"disk_bytes,omitempty"`
+	// The size of the data in it as the size limit counts it: the disk less the
+	// space the deleted rows left free for new rows.
+	DataBytes int64 `protobuf:"varint,5,opt,name=data_bytes,json=dataBytes,proto3" json:"data_bytes,omitempty"`
+	// The size limit of the store. Zero when it has none.
+	LimitBytes    int64 `protobuf:"varint,6,opt,name=limit_bytes,json=limitBytes,proto3" json:"limit_bytes,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -277,6 +285,27 @@ func (x *GetStoredDataResponse) GetEnvs() []*StoredEnv {
 	return nil
 }
 
+func (x *GetStoredDataResponse) GetDiskBytes() int64 {
+	if x != nil {
+		return x.DiskBytes
+	}
+	return 0
+}
+
+func (x *GetStoredDataResponse) GetDataBytes() int64 {
+	if x != nil {
+		return x.DataBytes
+	}
+	return 0
+}
+
+func (x *GetStoredDataResponse) GetLimitBytes() int64 {
+	if x != nil {
+		return x.LimitBytes
+	}
+	return 0
+}
+
 var File_flowrensic_v1_stored_data_proto protoreflect.FileDescriptor
 
 const file_flowrensic_v1_stored_data_proto_rawDesc = "" +
@@ -294,11 +323,17 @@ const file_flowrensic_v1_stored_data_proto_rawDesc = "" +
 	"\bschedule\x18\x06 \x01(\tR\bschedule\"N\n" +
 	"\tStoredEnv\x12\x10\n" +
 	"\x03env\x18\x01 \x01(\tR\x03env\x12/\n" +
-	"\x05kinds\x18\x02 \x03(\v2\x19.flowrensic.v1.StoredKindR\x05kinds\"\xa4\x01\n" +
+	"\x05kinds\x18\x02 \x03(\v2\x19.flowrensic.v1.StoredKindR\x05kinds\"\x83\x02\n" +
 	"\x15GetStoredDataResponse\x12/\n" +
 	"\x05kinds\x18\x01 \x03(\v2\x19.flowrensic.v1.StoredKindR\x05kinds\x12,\n" +
 	"\x03now\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x03now\x12,\n" +
-	"\x04envs\x18\x03 \x03(\v2\x18.flowrensic.v1.StoredEnvR\x04envsB\xb4\x01\n" +
+	"\x04envs\x18\x03 \x03(\v2\x18.flowrensic.v1.StoredEnvR\x04envs\x12\x1d\n" +
+	"\n" +
+	"disk_bytes\x18\x04 \x01(\x03R\tdiskBytes\x12\x1d\n" +
+	"\n" +
+	"data_bytes\x18\x05 \x01(\x03R\tdataBytes\x12\x1f\n" +
+	"\vlimit_bytes\x18\x06 \x01(\x03R\n" +
+	"limitBytesB\xb4\x01\n" +
 	"\x11com.flowrensic.v1B\x0fStoredDataProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (

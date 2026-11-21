@@ -10,8 +10,10 @@ import (
 	"sync"
 	"time"
 
+	commonpb "go.temporal.io/api/common/v1"
 	enumspb "go.temporal.io/api/enums/v1"
 	historypb "go.temporal.io/api/history/v1"
+	"go.temporal.io/api/workflowservice/v1"
 	tclient "go.temporal.io/sdk/client"
 	"google.golang.org/protobuf/proto"
 
@@ -84,6 +86,10 @@ type Options struct {
 	// with the hello and every beat. Nil sends no list, which is not an empty
 	// list.
 	WorkflowInterceptors []string
+	// TaskQueues is the task queues this worker polls, sent with the hello
+	// and every beat. Workers of the same task queues are one service, and a
+	// new version of it replaces the workers of the old ones. Nil, none.
+	TaskQueues []string
 	// MetricsAddress is the engine's Prometheus endpoint, as host:port, when
 	// the worker's config carries one. Empty, none.
 	MetricsAddress string
@@ -144,6 +150,7 @@ func Connect(ctx context.Context, options Options) (*Client, error) {
 		WorkerName:           options.WorkerName,
 		Version:              options.Version,
 		WorkflowInterceptors: options.WorkflowInterceptors,
+		TaskQueues:           options.TaskQueues,
 		MetricsAddress:       options.MetricsAddress,
 		WorkerMetricsAddress: options.WorkerMetricsAddress,
 		Engine:               histories,
@@ -212,8 +219,9 @@ type temporalHistories struct {
 }
 
 // temporalClient is the worker's Temporal client, or one dialed the first
-// time a history is read. One that failed to dial is tried again next time.
-func (h *temporalHistories) temporalClient() (tclient.Client, error) {
+// time a history is read, within ctx. One that failed to dial is tried again
+// next time.
+func (h *temporalHistories) temporalClient(ctx context.Context) (tclient.Client, error) {
 	if h.client != nil {
 		return h.client, nil
 	}
@@ -223,7 +231,7 @@ func (h *temporalHistories) temporalClient() (tclient.Client, error) {
 		return h.dialed, nil
 	}
 	h.tried = true
-	tc, err := tclient.Dial(tclient.Options{HostPort: h.address, Namespace: h.namespace})
+	tc, err := tclient.DialContext(ctx, tclient.Options{HostPort: h.address, Namespace: h.namespace})
 	if err != nil {
 		return nil, err
 	}
@@ -252,28 +260,49 @@ func closing(e *historypb.HistoryEvent) bool {
 }
 
 // ReadHistory reads the history of one run, only when Temporal holds more
-// events for it than were sent last.
-func (h *temporalHistories) ReadHistory(ctx context.Context, workflowID, runID string, sentEvents int64) (worker.History, bool, error) {
-	tc, err := h.temporalClient()
+// events for it than were sent last, and not when Temporal gives its size as
+// over read.MaxBytes. Each call to Temporal, the dial, the
+// describe and each page, ends at the call timeout or when ctx ends.
+func (h *temporalHistories) ReadHistory(ctx context.Context, read worker.HistoryRead) (worker.History, bool, error) {
+	bounded := func() (context.Context, context.CancelFunc) { return context.WithTimeout(ctx, read.CallTimeout) }
+	dialCtx, cancel := bounded()
+	tc, err := h.temporalClient(dialCtx)
+	cancel()
 	if err != nil {
 		return worker.History{}, false, err
 	}
-	described, err := tc.DescribeWorkflowExecution(ctx, workflowID, runID)
+	describeCtx, cancel := bounded()
+	described, err := tc.DescribeWorkflowExecution(describeCtx, read.WorkflowID, read.RunID)
+	cancel()
 	if err != nil {
 		return worker.History{}, false, err
 	}
 	length := described.GetWorkflowExecutionInfo().GetHistoryLength()
-	if length > 0 && length == sentEvents {
+	if length > 0 && length == read.SentEvents {
 		return worker.History{}, false, nil
 	}
+	if read.MaxBytes > 0 && described.GetWorkflowExecutionInfo().GetHistorySizeBytes() > read.MaxBytes {
+		return worker.History{Namespace: h.namespace, TooLarge: true}, true, nil
+	}
 	var events []*historypb.HistoryEvent
-	it := tc.GetWorkflowHistory(ctx, workflowID, runID, false, enumspb.HISTORY_EVENT_FILTER_TYPE_ALL_EVENT)
-	for it.HasNext() {
-		e, err := it.Next()
+	var token []byte
+	for {
+		pageCtx, cancel := bounded()
+		page, err := tc.WorkflowService().GetWorkflowExecutionHistory(pageCtx, &workflowservice.GetWorkflowExecutionHistoryRequest{
+			Namespace:              h.namespace,
+			Execution:              &commonpb.WorkflowExecution{WorkflowId: read.WorkflowID, RunId: read.RunID},
+			NextPageToken:          token,
+			HistoryEventFilterType: enumspb.HISTORY_EVENT_FILTER_TYPE_ALL_EVENT,
+		})
+		cancel()
 		if err != nil {
 			return worker.History{}, false, err
 		}
-		events = append(events, e)
+		events = append(events, page.GetHistory().GetEvents()...)
+		token = page.GetNextPageToken()
+		if len(token) == 0 {
+			break
+		}
 	}
 	bytes, err := proto.Marshal(&historypb.History{Events: events})
 	if err != nil {

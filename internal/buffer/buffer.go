@@ -9,6 +9,10 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	mathrand "math/rand/v2"
+	"net/http"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,6 +30,20 @@ const (
 	DefaultMaxWaiting      = 10_000
 	DefaultMaxBatchSize    = 500
 	DefaultMaxWaitingBytes = 16 * 1024 * 1024
+)
+
+// The waits after failed sends, the same in every SDK.
+const (
+	// failuresBeforeBackoff is how many sends in a row may fail before the
+	// next one waits longer than a tick.
+	failuresBeforeBackoff = 4
+	// maxBackoff is the longest wait before the next send after failures.
+	maxBackoff = time.Minute
+	// maxRetryAfter is the longest wait a Retry-After header can ask for.
+	maxRetryAfter = 5 * time.Minute
+	// serverErrorTries is how many times a send Flowrensic answered with an
+	// error of its own is sent before it is dropped.
+	serverErrorTries = 5
 )
 
 // Options is how records wait and leave. A zero field takes its default.
@@ -140,7 +158,19 @@ type Buffer[T any] struct {
 	sending   chan struct{}
 	reporting chan struct{}
 	scheduled bool
-	failing   bool
+	// failing is set while the last send went back to waiting. Until a send
+	// is answered, only the tick starts one, and not before retryAt.
+	failing  bool
+	failures int
+	retryAt  time.Time
+	// keptServerErrors is how many times the kept send was answered with an
+	// error of Flowrensic's own.
+	keptServerErrors int
+
+	// now and random are the clock and the random numbers of the waits after
+	// failed sends; a test sets its own.
+	now    func() time.Time
+	random func() float64
 
 	stop     chan struct{}
 	stopOnce sync.Once
@@ -165,6 +195,8 @@ func New[T any](target Target[T], options Options) *Buffer[T] {
 		timedOut:        map[string]int64{},
 		reportedWaiting: map[string]int64{},
 		stop:            make(chan struct{}),
+		now:             time.Now,
+		random:          mathrand.Float64,
 	}
 	go b.tick()
 	return b
@@ -187,12 +219,21 @@ func (b *Buffer[T]) tick() {
 		case <-b.stop:
 			return
 		case <-t.C:
-			b.mu.Lock()
-			b.startSend()
-			b.report()
-			b.mu.Unlock()
+			b.onTick()
 		}
 	}
+}
+
+// onTick starts a send and a report. While sends fail, it starts nothing,
+// the report included, before retryAt.
+func (b *Buffer[T]) onTick() {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.failing && b.now().Before(b.retryAt) {
+		return
+	}
+	b.startSend()
+	b.report()
 }
 
 func (b *Buffer[T]) queued() int { return len(b.queue) - b.head }
@@ -295,14 +336,65 @@ func sendAgain(err error) bool {
 	return errors.Is(err, context.DeadlineExceeded)
 }
 
+// serverError is whether Flowrensic answered with an error of its own, a 500.
+func serverError(err error) bool {
+	switch connect.CodeOf(err) {
+	case connect.CodeInternal, connect.CodeUnknown:
+		return true
+	}
+	return false
+}
+
+// retryAfter is the wait the Retry-After header of the answer asks for, in
+// seconds or as an HTTP date, at most maxRetryAfter, or 0.
+func retryAfter(err error, now time.Time) time.Duration {
+	var ce *connect.Error
+	if !errors.As(err, &ce) {
+		return 0
+	}
+	value := strings.TrimSpace(ce.Meta().Get("Retry-After"))
+	if value == "" {
+		return 0
+	}
+	var wait time.Duration
+	if seconds, perr := strconv.ParseFloat(value, 64); perr == nil {
+		wait = time.Duration(seconds * float64(time.Second))
+	} else if at, perr := http.ParseTime(value); perr == nil {
+		wait = at.Sub(now)
+	}
+	if wait <= 0 {
+		return 0
+	}
+	return min(wait, maxRetryAfter)
+}
+
 func timedOut(err error) bool {
 	return connect.CodeOf(err) == connect.CodeDeadlineExceeded || errors.Is(err, context.DeadlineExceeded)
 }
 
+// backoff is the wait before the next send after failures sends failed in a
+// row: a tick up to failuresBeforeBackoff, then the tick doubled for each
+// failure more, at most maxBackoff, times a factor between half and all of it
+// that random, from 0 to 1, gives.
+func backoff(interval time.Duration, failures int, random float64) time.Duration {
+	past := failures - failuresBeforeBackoff
+	if past <= 0 {
+		return interval
+	}
+	full := maxBackoff
+	if past < 30 && interval<<past < maxBackoff {
+		full = interval << past
+	}
+	return time.Duration(float64(full)/2 + random*float64(full)/2)
+}
+
 // startSend starts the next send when none is at work and records wait. Once
-// it is answered the next starts right away. A send with no answer, or
-// answered try again later, goes back and is tried again at the next tick. A
-// send refused for any other reason is dropped. b.mu is held.
+// it is answered the next starts right away. A send with no answer, answered
+// try again later, or answered with an error of Flowrensic's own fewer than
+// serverErrorTries times, goes back. It is tried again at the next tick for
+// the first failuresBeforeBackoff failures in a row and after backoff from
+// then on, and not before a Retry-After of the answer. A send refused for any
+// other reason is dropped. b.mu is held.
 func (b *Buffer[T]) startSend() {
 	if b.sending != nil || b.waitingCount() == 0 {
 		return
@@ -323,6 +415,9 @@ func (b *Buffer[T]) startSend() {
 		defer b.mu.Unlock()
 		if err == nil {
 			b.failing = false
+			b.failures = 0
+			b.retryAt = time.Time{}
+			b.keptServerErrors = 0
 		} else {
 			if timedOut(err) {
 				envs := map[string]bool{}
@@ -334,10 +429,25 @@ func (b *Buffer[T]) startSend() {
 				}
 				b.timedOutTotal++
 			}
-			if sendAgain(err) {
+			server := serverError(err)
+			if server {
+				b.keptServerErrors++
+			} else {
+				b.keptServerErrors = 0
+			}
+			if sendAgain(err) || (server && b.keptServerErrors < serverErrorTries) {
 				b.failing = true
+				b.failures++
+				now := b.now()
+				asked := retryAfter(err, now)
+				if b.failures <= failuresBeforeBackoff && asked == 0 {
+					b.retryAt = time.Time{}
+				} else {
+					b.retryAt = now.Add(max(backoff(b.options.FlushInterval, b.failures, b.random()), asked))
+				}
 				b.putBack(entries, id)
 			} else {
+				b.keptServerErrors = 0
 				for _, one := range records {
 					b.drop(b.target.EnvOf(one), 1)
 				}

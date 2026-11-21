@@ -5,6 +5,7 @@
 package worker
 
 import (
+	"container/list"
 	"context"
 	"errors"
 	"fmt"
@@ -43,8 +44,16 @@ const (
 // historiesAtOnce is how many histories a worker reads and sends at once.
 const historiesAtOnce = 16
 
+// historyCapBytes is the largest history a worker sends. Flowrensic refuses
+// a call over 4 MiB.
+const historyCapBytes = 3 * 1024 * 1024
+
+// quietMax is the longest a run whose history did not change waits before it
+// is described again.
+const quietMax = time.Minute
+
 // seenCap is the most runs the worker holds to send the histories of. Past it
-// the oldest is dropped.
+// the run heard of least lately is dropped.
 const seenCap = 10_000
 
 // Options is what a worker tells Flowrensic about itself, and where its
@@ -76,6 +85,10 @@ type Options struct {
 	// with the hello and every beat. Nil sends no list, which is not an empty
 	// list.
 	WorkflowInterceptors []string
+	// TaskQueues is the task queues this worker polls, sent with the hello
+	// and every beat. Workers of the same task queues are one service, and a
+	// new version of it replaces the workers of the old ones. Nil, none.
+	TaskQueues []string
 	// MetricsAddress is the engine's Prometheus endpoint, as host:port, when
 	// the worker's config carries one. Empty, none.
 	MetricsAddress string
@@ -130,14 +143,34 @@ type History struct {
 	// TaskAttempt is the attempt of the run's pending workflow task, 0 for
 	// none.
 	TaskAttempt int32
+	// TooLarge is whether the engine gives the size of the history as over
+	// HistoryRead.MaxBytes, so it was not read.
+	TooLarge bool
+}
+
+// HistoryRead is which history the engine's hook reads, and how.
+type HistoryRead struct {
+	WorkflowID string
+	RunID      string
+	// SentEvents is how many events of the run were sent last, 0 before the
+	// first send.
+	SentEvents int64
+	// CallTimeout is how long each call to the engine may take, the dial
+	// included: the timeout of the calls to Flowrensic.
+	CallTimeout time.Duration
+	// MaxBytes is the largest history the worker sends. A history whose size
+	// the engine gives as larger is not read: the hook returns it with
+	// TooLarge set.
+	MaxBytes int64
 }
 
 // Engine is the hook of the engine's SDK that reads the history of a run.
 type Engine interface {
 	// ReadHistory reads the history of one run. When the engine holds no more
-	// events for it than sentEvents, it returns changed false and reads
-	// nothing more.
-	ReadHistory(ctx context.Context, workflowID, runID string, sentEvents int64) (history History, changed bool, err error)
+	// events for it than read.SentEvents, it returns changed false and reads
+	// nothing more. Each call to the engine ends at read.CallTimeout or when
+	// ctx ends.
+	ReadHistory(ctx context.Context, read HistoryRead) (history History, changed bool, err error)
 	// Close closes what ReadHistory opened. Called once, at shutdown.
 	Close()
 }
@@ -162,6 +195,9 @@ type Telemetry struct {
 	answer           Answer
 	ticker           *time.Ticker
 	working          *tickWork
+	// now is the clock of the waits between the reads of a run; a test sets
+	// its own.
+	now func() time.Time
 
 	stopTicker  chan struct{}
 	stopAsking  context.CancelFunc
@@ -213,6 +249,7 @@ func Start(ctx context.Context, options Options) (*Telemetry, error) {
 		}),
 		http:             httpClient,
 		sendingHistories: true,
+		now:              time.Now,
 		stopTicker:       make(chan struct{}),
 		askingDone:       make(chan struct{}),
 	}
@@ -226,7 +263,7 @@ func Start(ctx context.Context, options Options) (*Telemetry, error) {
 		Buffer:              options.Buffer,
 		HTTPClient:          httpClient,
 	}, options.Tag)
-	c.sink = &seeingSink{inner: c.inner, client: c, seen: map[string]*seenRun{}}
+	c.sink = &seeingSink{inner: c.inner, client: c, seen: map[string]*list.Element{}, order: list.New()}
 
 	res, err := c.handshake(ctx)
 	strategy := options.NoAnswer
@@ -265,6 +302,7 @@ func (c *Telemetry) ask(ctx context.Context) (*flowrensicv1.EphemeralRunHandshak
 		WorkerId:             c.options.WorkerID,
 		Version:              c.options.Version,
 		WorkflowInterceptors: InterceptorList(c.options.WorkflowInterceptors),
+		TaskQueues:           c.options.TaskQueues,
 	}))
 	if err != nil {
 		return nil, err
@@ -388,7 +426,7 @@ func (c *Telemetry) tick() {
 	c.working = w
 	go func() {
 		defer close(w.done)
-		c.collect(ctx, ctx)
+		c.collect(ctx, ctx, false)
 		cancel()
 		c.mu.Lock()
 		c.working = nil
@@ -398,20 +436,25 @@ func (c *Telemetry) tick() {
 
 // collect sends a beat, the engine's scrape when told to forward, the
 // worker's own scrape when it has the address, and the histories of the runs
-// the sink saw. A part that fails waits for the next tick. ctx cuts the calls
-// short; starting stops new histories from starting.
-func (c *Telemetry) collect(ctx, starting context.Context) {
-	c.call(ctx, func(ctx context.Context) error {
+// the sink saw. A part that fails waits for the next tick. A tick whose beat
+// Flowrensic did not take does nothing more. ctx cuts the calls short;
+// starting stops new histories from starting.
+func (c *Telemetry) collect(ctx, starting context.Context, every bool) {
+	beat := c.call(ctx, func(ctx context.Context) error {
 		_, err := c.clients.Ingest.WorkerBeat(ctx, connect.NewRequest(&flowrensicv1.WorkerBeatRequest{
 			WorkerId: c.options.WorkerID, Version: c.options.Version, WorkflowInterceptors: InterceptorList(c.options.WorkflowInterceptors),
+			TaskQueues: c.options.TaskQueues,
 		}))
 		return err
 	})
+	if beat != nil {
+		return
+	}
 	c.mu.Lock()
 	forwarding, sending, names := c.forwarding, c.sendingHistories, c.metricNames
 	c.mu.Unlock()
 	if forwarding && c.options.MetricsAddress != "" {
-		c.call(ctx, func(ctx context.Context) error {
+		_ = c.call(ctx, func(ctx context.Context) error {
 			page, err := c.scrape(ctx, c.options.MetricsAddress)
 			if err != nil {
 				return err
@@ -423,7 +466,7 @@ func (c *Telemetry) collect(ctx, starting context.Context) {
 		})
 	}
 	if c.options.WorkerMetricsAddress != "" {
-		c.call(ctx, func(ctx context.Context) error {
+		_ = c.call(ctx, func(ctx context.Context) error {
 			page, err := c.scrape(ctx, c.options.WorkerMetricsAddress)
 			if err != nil {
 				return err
@@ -437,7 +480,18 @@ func (c *Telemetry) collect(ctx, starting context.Context) {
 	if !sending {
 		return
 	}
+	// The shutdown reads every run; a tick only the runs due.
 	runs := c.sink.runs()
+	if !every {
+		now := c.now()
+		due := runs[:0]
+		for _, one := range runs {
+			if !one.waits(now) {
+				due = append(due, one)
+			}
+		}
+		runs = due
+	}
 	next := make(chan *seenRun, len(runs))
 	for _, one := range runs {
 		next <- one
@@ -459,11 +513,11 @@ func (c *Telemetry) collect(ctx, starting context.Context) {
 	wg.Wait()
 }
 
-// call runs one call with the timeout, and drops its error.
-func (c *Telemetry) call(ctx context.Context, job func(context.Context) error) {
+// call runs one call with the timeout and gives its error.
+func (c *Telemetry) call(ctx context.Context, job func(context.Context) error) error {
 	ctx, cancel := context.WithTimeout(ctx, c.options.Timeout)
 	defer cancel()
-	_ = job(ctx)
+	return job(ctx)
 }
 
 func (c *Telemetry) scrape(ctx context.Context, address string) (string, error) {
@@ -526,14 +580,31 @@ func onlyNamed(page string, names map[string]bool) string {
 
 // forwardHistory sends the history of one run, only when the engine holds
 // more events for it than were sent last. A run whose history was sent with
-// the event that ends it is not sent again.
+// the event that ends it is not sent again. A run found unchanged waits twice
+// as long before the next read, at most quietMax. A history over
+// historyCapBytes, or one Flowrensic refuses as too large, is given up.
 func (c *Telemetry) forwardHistory(ctx context.Context, run *seenRun) error {
 	if c.options.Engine == nil {
 		return nil
 	}
-	history, changed, err := c.options.Engine.ReadHistory(ctx, run.workflowID, run.runID, run.sentEvents())
-	if err != nil || !changed {
+	history, changed, err := c.options.Engine.ReadHistory(ctx, HistoryRead{
+		WorkflowID: run.workflowID, RunID: run.runID, SentEvents: run.sentEvents(), CallTimeout: c.options.Timeout,
+		MaxBytes: historyCapBytes,
+	})
+	if err != nil {
 		return err
+	}
+	if !changed {
+		c.mu.Lock()
+		interval := time.Duration(max(c.intervalSeconds, 1)) * time.Second
+		c.mu.Unlock()
+		run.unchanged(c.now(), interval)
+		return nil
+	}
+	run.changed()
+	if history.TooLarge || len(history.Bytes) > historyCapBytes {
+		c.sink.giveUp(run.runID)
+		return nil
 	}
 	callCtx, cancel := context.WithTimeout(ctx, c.options.Timeout)
 	defer cancel()
@@ -547,6 +618,9 @@ func (c *Telemetry) forwardHistory(ctx context.Context, run *seenRun) error {
 		History:     history.Bytes,
 	}))
 	if err != nil {
+		if connect.CodeOf(err) == connect.CodeResourceExhausted {
+			c.sink.giveUp(run.runID)
+		}
 		return err
 	}
 	run.sent(history.Events)
@@ -641,11 +715,11 @@ func (c *Telemetry) shutdown(ctx context.Context) error {
 	handOver := c.answered || !c.unanswered
 	c.mu.Unlock()
 	if handOver {
-		c.collect(ctx, starting)
+		c.collect(ctx, starting, true)
 	}
 	err := c.inner.Close(ctx)
 	if handOver {
-		c.call(ctx, func(ctx context.Context) error {
+		_ = c.call(ctx, func(ctx context.Context) error {
 			_, err := c.clients.Ingest.EphemeralRunHandover(ctx, connect.NewRequest(&flowrensicv1.EphemeralRunHandoverRequest{
 				WorkerId: c.options.WorkerID, Version: c.options.Version,
 			}))
@@ -662,6 +736,38 @@ type seenRun struct {
 	runID, workflowID string
 	mu                sync.Mutex
 	events            int64
+	// quiet is how many reads in a row found the history unchanged, and
+	// nextAt when the run is read next.
+	quiet  int
+	nextAt time.Time
+}
+
+// waits is whether the run is not due to be read at now.
+func (r *seenRun) waits(now time.Time) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return now.Before(r.nextAt)
+}
+
+// unchanged notes a read that found the history unchanged: the run waits
+// twice as long as the time before, from two ticks, at most quietMax.
+func (r *seenRun) unchanged(now time.Time, interval time.Duration) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.quiet++
+	wait := quietMax
+	if r.quiet < 16 && interval<<r.quiet < quietMax {
+		wait = interval << r.quiet
+	}
+	r.nextAt = now.Add(wait)
+}
+
+// changed ends the wait of the run.
+func (r *seenRun) changed() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.quiet = 0
+	r.nextAt = time.Time{}
 }
 
 func (r *seenRun) sentEvents() int64 {
@@ -676,26 +782,35 @@ func (r *seenRun) sent(n int64) {
 	r.events = n
 }
 
-// seeingSink notes the run of each attempt, at most seenCap runs, the oldest
-// dropped past it, while the worker sends histories.
+// seeingSink notes the run of each attempt while the worker sends histories,
+// at most seenCap runs. An attempt of a run moves it to the back of order, so
+// the run dropped past seenCap is the one heard of least lately. A run given
+// up is not noted again; at most seenCap runs are given up, the oldest
+// forgotten first.
 type seeingSink struct {
 	inner  AttemptSink
 	client *Telemetry
 	mu     sync.Mutex
-	seen   map[string]*seenRun
-	order  []string
+	// seen is the element of each run in order, whose values are *seenRun.
+	seen         map[string]*list.Element
+	order        *list.List
+	givenUp      map[string]bool
+	givenUpOrder []string
 }
 
 func (s *seeingSink) Record(one *ActivityAttempt) {
 	if one.GetRunKey() != "" && one.GetWorkflowExecutionId() != "" && s.client.SendingHistories() {
 		s.mu.Lock()
-		if _, ok := s.seen[one.GetRunKey()]; !ok {
-			s.seen[one.GetRunKey()] = &seenRun{runID: one.GetRunKey(), workflowID: one.GetWorkflowExecutionId()}
-			s.order = append(s.order, one.GetRunKey())
+		if held, ok := s.seen[one.GetRunKey()]; ok {
+			held.Value.(*seenRun).changed()
+			s.order.MoveToBack(held)
+		} else if !s.givenUp[one.GetRunKey()] {
+			run := &seenRun{runID: one.GetRunKey(), workflowID: one.GetWorkflowExecutionId()}
+			s.seen[run.runID] = s.order.PushBack(run)
 			for len(s.seen) > seenCap {
-				oldest := s.order[0]
-				s.order = s.order[1:]
-				delete(s.seen, oldest)
+				oldest := s.order.Front()
+				s.order.Remove(oldest)
+				delete(s.seen, oldest.Value.(*seenRun).runID)
 			}
 		}
 		s.mu.Unlock()
@@ -719,11 +834,9 @@ func (s *seeingSink) Spent(d time.Duration) {
 func (s *seeingSink) runs() []*seenRun {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	out := make([]*seenRun, 0, len(s.order))
-	for _, id := range s.order {
-		if one, ok := s.seen[id]; ok {
-			out = append(out, one)
-		}
+	out := make([]*seenRun, 0, s.order.Len())
+	for e := s.order.Front(); e != nil; e = e.Next() {
+		out = append(out, e.Value.(*seenRun))
 	}
 	return out
 }
@@ -731,18 +844,34 @@ func (s *seeingSink) runs() []*seenRun {
 func (s *seeingSink) done(runID string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	delete(s.seen, runID)
-	for i, id := range s.order {
-		if id == runID {
-			s.order = append(s.order[:i], s.order[i+1:]...)
-			break
-		}
+	if e, ok := s.seen[runID]; ok {
+		s.order.Remove(e)
+		delete(s.seen, runID)
+	}
+}
+
+// giveUp drops the run and keeps it from being noted again.
+func (s *seeingSink) giveUp(runID string) {
+	s.done(runID)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.givenUp == nil {
+		s.givenUp = map[string]bool{}
+	}
+	if s.givenUp[runID] {
+		return
+	}
+	s.givenUp[runID] = true
+	s.givenUpOrder = append(s.givenUpOrder, runID)
+	for len(s.givenUpOrder) > seenCap {
+		delete(s.givenUp, s.givenUpOrder[0])
+		s.givenUpOrder = s.givenUpOrder[1:]
 	}
 }
 
 func (s *seeingSink) forget() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.seen = map[string]*seenRun{}
-	s.order = nil
+	s.seen = map[string]*list.Element{}
+	s.order = list.New()
 }

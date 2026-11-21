@@ -323,9 +323,13 @@ func (x *WorkerMetric) GetMetricType() string {
 // worker read it from its metrics endpoint. Parsing happens on the backend.
 // ephemeral_run is empty for an env that has no instances.
 type IngestWorkerMetricsRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	WorkerId      string                 `protobuf:"bytes,3,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
-	Exposition    string                 `protobuf:"bytes,4,opt,name=exposition,proto3" json:"exposition,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	WorkerId   string                 `protobuf:"bytes,3,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
+	Exposition string                 `protobuf:"bytes,4,opt,name=exposition,proto3" json:"exposition,omitempty"`
+	// delta true: the exposition holds only the series that changed since the
+	// worker's last send, and each counter, histogram and summary count or sum
+	// is how much it grew since then.
+	Delta         bool `protobuf:"varint,5,opt,name=delta,proto3" json:"delta,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -372,6 +376,13 @@ func (x *IngestWorkerMetricsRequest) GetExposition() string {
 		return x.Exposition
 	}
 	return ""
+}
+
+func (x *IngestWorkerMetricsRequest) GetDelta() bool {
+	if x != nil {
+		return x.Delta
+	}
+	return false
 }
 
 type IngestWorkerMetricsResponse struct {
@@ -554,8 +565,12 @@ type EphemeralRunHandshakeRequest struct {
 	Version  string `protobuf:"bytes,5,opt,name=version,proto3" json:"version,omitempty"`
 	// The workflow interceptors the worker loads. Unset, it sends no list.
 	WorkflowInterceptors *WorkflowInterceptors `protobuf:"bytes,6,opt,name=workflow_interceptors,json=workflowInterceptors,proto3" json:"workflow_interceptors,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// TaskQueues are the task queues the worker polls, as it was configured
+	// with them. Workers of the same task queues are of the same service.
+	// Empty when it was told none.
+	TaskQueues    []string `protobuf:"bytes,7,rep,name=task_queues,json=taskQueues,proto3" json:"task_queues,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *EphemeralRunHandshakeRequest) Reset() {
@@ -612,6 +627,13 @@ func (x *EphemeralRunHandshakeRequest) GetVersion() string {
 func (x *EphemeralRunHandshakeRequest) GetWorkflowInterceptors() *WorkflowInterceptors {
 	if x != nil {
 		return x.WorkflowInterceptors
+	}
+	return nil
+}
+
+func (x *EphemeralRunHandshakeRequest) GetTaskQueues() []string {
+	if x != nil {
+		return x.TaskQueues
 	}
 	return nil
 }
@@ -1055,8 +1077,10 @@ type WorkerBeatRequest struct {
 	Version  string                 `protobuf:"bytes,4,opt,name=version,proto3" json:"version,omitempty"`
 	// The workflow interceptors the worker loads. Unset, it sends no list.
 	WorkflowInterceptors *WorkflowInterceptors `protobuf:"bytes,5,opt,name=workflow_interceptors,json=workflowInterceptors,proto3" json:"workflow_interceptors,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// The task queues the worker polls, as in its handshake.
+	TaskQueues    []string `protobuf:"bytes,6,rep,name=task_queues,json=taskQueues,proto3" json:"task_queues,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *WorkerBeatRequest) Reset() {
@@ -1106,6 +1130,13 @@ func (x *WorkerBeatRequest) GetVersion() string {
 func (x *WorkerBeatRequest) GetWorkflowInterceptors() *WorkflowInterceptors {
 	if x != nil {
 		return x.WorkflowInterceptors
+	}
+	return nil
+}
+
+func (x *WorkerBeatRequest) GetTaskQueues() []string {
+	if x != nil {
+		return x.TaskQueues
 	}
 	return nil
 }
@@ -1962,14 +1993,18 @@ func (x *GetEphemeralRunSummaryRequest) GetPage() *PageRequest {
 type GetEphemeralRunSummaryResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	Run   *EphemeralRunSummary   `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
-	// outcome is passed or failed. It is failed only when a replay result of
-	// the run failed.
+	// outcome is passed or failed. It is failed when a replay result of the
+	// run failed or when the run has a critical finding.
 	Outcome string `protobuf:"bytes,2,opt,name=outcome,proto3" json:"outcome,omitempty"`
 	// results are the replay results the run sent, newest first.
-	Results       []*ReplayResult `protobuf:"bytes,3,rep,name=results,proto3" json:"results,omitempty"`
-	Page          *PageResponse   `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Results []*ReplayResult `protobuf:"bytes,3,rep,name=results,proto3" json:"results,omitempty"`
+	Page    *PageResponse   `protobuf:"bytes,4,opt,name=page,proto3" json:"page,omitempty"`
+	// critical_findings is how many critical findings the run has: findings of
+	// severity critical, not marked a mistake and not silenced, with an
+	// observation of a workflow run of the run.
+	CriticalFindings int32 `protobuf:"varint,5,opt,name=critical_findings,json=criticalFindings,proto3" json:"critical_findings,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *GetEphemeralRunSummaryResponse) Reset() {
@@ -2030,6 +2065,13 @@ func (x *GetEphemeralRunSummaryResponse) GetPage() *PageResponse {
 	return nil
 }
 
+func (x *GetEphemeralRunSummaryResponse) GetCriticalFindings() int32 {
+	if x != nil {
+		return x.CriticalFindings
+	}
+	return 0
+}
+
 var File_flowrensic_v1_ephemeral_run_proto protoreflect.FileDescriptor
 
 const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
@@ -2071,12 +2113,13 @@ const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
 	"metricType\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x89\x01\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9f\x01\n" +
 	"\x1aIngestWorkerMetricsRequest\x12\x1b\n" +
 	"\tworker_id\x18\x03 \x01(\tR\bworkerId\x12\x1e\n" +
 	"\n" +
 	"exposition\x18\x04 \x01(\tR\n" +
-	"expositionJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"9\n" +
+	"exposition\x12\x14\n" +
+	"\x05delta\x18\x05 \x01(\bR\x05deltaJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"9\n" +
 	"\x1bIngestWorkerMetricsResponse\x12\x1a\n" +
 	"\baccepted\x18\x01 \x01(\x05R\baccepted\"\x9e\x01\n" +
 	"\x14WorkerMetricsRequest\x12\x10\n" +
@@ -2087,12 +2130,14 @@ const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
 	"\x04page\x18\x04 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\x7f\n" +
 	"\x15WorkerMetricsResponse\x125\n" +
 	"\ametrics\x18\x01 \x03(\v2\x1b.flowrensic.v1.WorkerMetricR\ametrics\x12/\n" +
-	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\"\x88\x02\n" +
+	"\x04page\x18\x02 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\"\xa9\x02\n" +
 	"\x1cEphemeralRunHandshakeRequest\x12'\n" +
 	"\x0fmetrics_address\x18\x03 \x01(\tR\x0emetricsAddress\x12\x1b\n" +
 	"\tworker_id\x18\x04 \x01(\tR\bworkerId\x12\x18\n" +
 	"\aversion\x18\x05 \x01(\tR\aversion\x12X\n" +
-	"\x15workflow_interceptors\x18\x06 \x01(\v2#.flowrensic.v1.WorkflowInterceptorsR\x14workflowInterceptorsJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"\xbb\x01\n" +
+	"\x15workflow_interceptors\x18\x06 \x01(\v2#.flowrensic.v1.WorkflowInterceptorsR\x14workflowInterceptors\x12\x1f\n" +
+	"\vtask_queues\x18\a \x03(\tR\n" +
+	"taskQueuesJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"\xbb\x01\n" +
 	"\x1dEphemeralRunHandshakeResponse\x12\x18\n" +
 	"\aforward\x18\x01 \x01(\bR\aforward\x12)\n" +
 	"\x10interval_seconds\x18\x02 \x01(\x05R\x0fintervalSeconds\x12%\n" +
@@ -2123,11 +2168,13 @@ const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
 	"\x1bEphemeralRunHandoverRequest\x12\x1b\n" +
 	"\tworker_id\x18\x03 \x01(\tR\bworkerId\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\tR\aversionJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"\x1e\n" +
-	"\x1cEphemeralRunHandoverResponse\"\xd4\x01\n" +
+	"\x1cEphemeralRunHandoverResponse\"\xf5\x01\n" +
 	"\x11WorkerBeatRequest\x12\x1b\n" +
 	"\tworker_id\x18\x03 \x01(\tR\bworkerId\x12\x18\n" +
 	"\aversion\x18\x04 \x01(\tR\aversion\x12X\n" +
-	"\x15workflow_interceptors\x18\x05 \x01(\v2#.flowrensic.v1.WorkflowInterceptorsR\x14workflowInterceptorsJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"\x14\n" +
+	"\x15workflow_interceptors\x18\x05 \x01(\v2#.flowrensic.v1.WorkflowInterceptorsR\x14workflowInterceptors\x12\x1f\n" +
+	"\vtask_queues\x18\x06 \x03(\tR\n" +
+	"taskQueuesJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\vcurrent_envR\x15current_ephemeral_run\"\x14\n" +
 	"\x12WorkerBeatResponse\"z\n" +
 	"\x11OldWorkersRequest\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12.\n" +
@@ -2182,12 +2229,13 @@ const file_flowrensic_v1_ephemeral_run_proto_rawDesc = "" +
 	"\x1aDeleteEphemeralRunResponse\x12\x12\n" +
 	"\x04rows\x18\x01 \x01(\x03R\x04rows\"O\n" +
 	"\x1dGetEphemeralRunSummaryRequest\x12.\n" +
-	"\x04page\x18\x01 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\xd8\x01\n" +
+	"\x04page\x18\x01 \x01(\v2\x1a.flowrensic.v1.PageRequestR\x04page\"\x85\x02\n" +
 	"\x1eGetEphemeralRunSummaryResponse\x124\n" +
 	"\x03run\x18\x01 \x01(\v2\".flowrensic.v1.EphemeralRunSummaryR\x03run\x12\x18\n" +
 	"\aoutcome\x18\x02 \x01(\tR\aoutcome\x125\n" +
 	"\aresults\x18\x03 \x03(\v2\x1b.flowrensic.v1.ReplayResultR\aresults\x12/\n" +
-	"\x04page\x18\x04 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04pageB\xb6\x01\n" +
+	"\x04page\x18\x04 \x01(\v2\x1b.flowrensic.v1.PageResponseR\x04page\x12+\n" +
+	"\x11critical_findings\x18\x05 \x01(\x05R\x10criticalFindingsB\xb6\x01\n" +
 	"\x11com.flowrensic.v1B\x11EphemeralRunProtoP\x01Z9go.flowrensic.com/sdk-core/gen/flowrensic/v1;flowrensicv1\xa2\x02\x03FXX\xaa\x02\rFlowrensic.V1\xca\x02\rFlowrensic\\V1\xe2\x02\x19Flowrensic\\V1\\GPBMetadata\xea\x02\x0eFlowrensic::V1b\x06proto3"
 
 var (
